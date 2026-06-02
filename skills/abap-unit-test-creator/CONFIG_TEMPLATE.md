@@ -1,0 +1,12 @@
+# Config Template: abap-unit-test-creator
+
+> Placeholder. Will document required and recommended config fields.
+
+## Required in `project-config.md`
+- TODO
+
+## Required in `configs/config.md`
+- TODO
+
+## Recommended in `configs/`
+- TODO
