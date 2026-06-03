@@ -66,9 +66,10 @@ Load only the one example that matches. Do not load multiple examples speculativ
 
 ### Step 1 — Obtain the source
 
-If the user provides an object name rather than pasted code, check the project
-config for a `source_retrieval_tool` setting and invoke it. If no tool is
-configured, ask the user to paste the source.
+If the user provides pasted source code, use it directly.
+
+If the user provides an object name, read `references/source-reader.md` and
+follow the detection chain to fetch the source.
 
 Do not proceed without reading the actual implementation source.
 

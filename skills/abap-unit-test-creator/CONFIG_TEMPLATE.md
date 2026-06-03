@@ -7,7 +7,6 @@
 
 ## Required in `configs/config.md`
 
-- Source retrieval tool to use when user provides an object name (e.g. `abap-reader`)
 - Test class prefix (default: `ltc_`)
 - Fake/double class prefix (default: `ltd_`)
 
