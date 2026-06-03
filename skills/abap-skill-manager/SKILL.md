@@ -265,6 +265,8 @@ exist in the core but not yet in the project.
 5. Print summary: skills updated, new wrappers created (if any), submodule
    pointer status.
 
+> **Note:** `references/source-reader.md` inside each consumer skill is a copy of the master in `abap-skills-core/references/`. A `git pull` on the submodule updates all copies at once. In manual mode, replace the file in each skill's `references/` folder manually.
+
 ---
 
 ### `update` — Manual mode
