@@ -7,10 +7,10 @@ Used as a git submodule in ABAP project repositories.
 ## Skills
 
 - `abap-code-review` — ABAP code review (PERF, CLEAN, RAP, CDS, TEST, DOC)
-- `abap-reader` — Fetch ABAP artifact source from ADT cache
+- `abap-vs-reader` — Fetch ABAP artifact source from ADT VSCode extension cache
 - `abap-unit-test-creator` — Generate isolated ABAP Unit tests
 - `abap-run-unit-tests` — Run ABAP Unit Tests via ADT MCP server
-- `abap-skill-manager` — Manage skill lifecycle (init, update, status, validate, push)
+- `abap-skill-manager` — Manage skill lifecycle (init, update, status, validate, push, instruction)
 
 ## Setup Instructions
 
@@ -60,7 +60,7 @@ Create a `skills/` folder next to `skills-core/` and add one subfolder per skill
       SKILL.md                   ← wrapper
       configs/
         config.md                ← required entry point
-    abap-reader/
+    abap-vs-reader/
       SKILL.md
       configs/
         config.md
@@ -80,12 +80,14 @@ Each `SKILL.md` wrapper tells the agent to read the core skill + project config:
 
 ```markdown
 Read `.claude/skills/project-config.md` for project-wide context.
-Read `.claude/skills-core/skills/abap-code-review/SKILL.md` for core instructions.
-Read `.claude/skills/abap-code-review/configs/config.md` for project-specific rules.
+Read `.claude/skills-core/skills/<skill-name>/SKILL.md` for core instructions.
+Read `.claude/skills/<skill-name>/configs/config.md` for project-specific rules.
 If config.md references additional files, read those too before proceeding.
 
 Apply core instructions using the project context and all loaded config files.
 ```
+
+> **Tip:** Run `abap-skill-manager init` to generate all wrappers and config stubs automatically.
 
 See each skill's `CONFIG_TEMPLATE.md` for required fields in `project-config.md` and `configs/config.md`.
 
