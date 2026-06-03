@@ -486,9 +486,6 @@ abap-skill-manager init
 # Step 3 — Fill in project-config.md and each configs/config.md
 # See each skill's CONFIG_TEMPLATE.md for required fields
 abap-skill-manager validate
-
-# Step 4 — Commit
-abap-skill-manager push
 ```
 
 **Updating core skills:**
@@ -527,7 +524,7 @@ skill without the full submodule setup.
    abap-skill-manager init
    ```
 4. Fill in `project-config.md` and each `configs/config.md`.
-5. Commit with `abap-skill-manager push`.
+5. Run `abap-skill-manager validate` to check nothing was missed.
 
 **Important — abap-vs-reader script path:**
 
