@@ -9,30 +9,55 @@ description: >
 
 # abap-skill-manager — Core Skill
 
-Manages the lifecycle of ABAP AI skills in any project that uses the
-abap-skills-core submodule pattern.
+Manages the lifecycle of ABAP AI skills in any project. Supports two install
+modes: **submodule** (shared core via git submodule) and **manual** (skill
+files copied directly into the project).
 
 ---
 
-## Phase 0 — Detect Platform Paths
+## Phase 0 — Detect Platform and Install Mode
 
-Before executing any command, detect the AI platform by checking which folder
-exists:
+Before executing any command, run the following checks to set four variables
+used throughout this skill: `PLATFORM`, `SKILLS_PATH`, `INSTALL_MODE`,
+`CORE_PATH`.
+
+### Step 1 — Detect platform
 
 ```bash
-ls .claude/skills-core 2>/dev/null && echo "claude" || echo "not-claude"
-ls .agents/skills-core 2>/dev/null && echo "copilot" || echo "not-copilot"
+ls .claude/ 2>/dev/null && echo "claude"
+ls .agents/ 2>/dev/null && echo "copilot"
 ```
 
-| Platform | `CORE_PATH` | `SKILLS_PATH` |
+| Detected folder | `PLATFORM` | `SKILLS_PATH` |
 |---|---|---|
-| Claude Code | `.claude/skills-core` | `.claude/skills` |
-| GitHub Copilot Chat | `.agents/skills-core` | `.agents/skills` |
+| `.claude/` | `claude` | `.claude/skills` |
+| `.agents/` | `copilot` | `.agents/skills` |
 
-If neither folder exists, stop and tell the user to add the submodule first.
-Show them the `instruction` command output as the setup guide.
+If both exist, prefer `claude`. If neither exists, use `claude` as the default.
 
-Use `CORE_PATH` and `SKILLS_PATH` as shorthand throughout this skill.
+### Step 2 — Detect install mode
+
+```bash
+# Claude Code
+ls .claude/skills-core 2>/dev/null && echo "submodule" || echo "manual"
+
+# Copilot
+ls .agents/skills-core 2>/dev/null && echo "submodule" || echo "manual"
+```
+
+| Condition | `INSTALL_MODE` | `CORE_PATH` |
+|---|---|---|
+| `$SKILLS_PATH/../skills-core/` exists | `submodule` | `.claude/skills-core` or `.agents/skills-core` |
+| `$SKILLS_PATH/../skills-core/` absent | `manual` | *(not used — each skill folder is its own core)* |
+
+### Step 3 — Validate minimum state
+
+- **Submodule mode:** If `$CORE_PATH/skills/` does not exist, stop and tell
+  the user to run `git submodule update --init`.
+- **Manual mode:** If `$SKILLS_PATH/` does not exist or is empty, stop and
+  show the `instruction` output.
+
+Use `SKILLS_PATH`, `INSTALL_MODE`, and `CORE_PATH` as shorthand throughout.
 
 ---
 
@@ -47,8 +72,14 @@ Known commands: `init`, `update`, `status`, `validate`, `push`, `instruction`.
 
 ## Command: `init`
 
-Bootstrap the skills folder structure for a new project. Creates wrapper
-SKILL.md and configs/config.md stubs for every skill found in the core.
+Bootstrap configs for a new project. Behaviour differs by install mode.
+
+---
+
+### `init` — Submodule mode
+
+Creates wrapper SKILL.md and `configs/config.md` stubs for every skill found
+in the core that is not yet present in the project.
 
 **Steps:**
 
@@ -57,46 +88,15 @@ SKILL.md and configs/config.md stubs for every skill found in the core.
 2. Scan `$CORE_PATH/skills/` — collect every subdirectory that contains a
    `SKILL.md`. This is the **core skill list**.
 
-3. Check if `$SKILLS_PATH/project-config.md` exists. If missing, create it:
-
-   ```markdown
-   # Project Configuration
-
-   ## Project
-   Name: TODO — fill in project name
-   System: TODO — SAP system ID (e.g. DEMO_001_EN)
-   Platform: S/4HANA On-Premise
-   Primary namespace: TODO — e.g. /DEMO/
-
-   ## DDIC Naming
-   - Domain: TODO — e.g. /demo/do_*
-   - Data Element: TODO — e.g. /demo/de_*
-   - Structure: TODO — e.g. /demo/s_*
-   - Table Type: TODO — e.g. /demo/t_*
-   - DB Table: TODO — e.g. /demo/a_*
-   - Draft Table: TODO — e.g. /demo/d_*
-
-   ## CDS Naming
-   - Interface View: TODO — e.g. /demo/I_*
-   - Projection View: TODO — e.g. /demo/C_*
-   - Base View: TODO — e.g. /demo/R_*
-
-   ## RAP
-   - Behavior Implementation Class: TODO — e.g. /demo/bp_<RootCDSViewEntityName>
-   - Auth check class: TODO — e.g. /demo/cl_auth_check_*
-   - Obsolete package: TODO — e.g. /DEMO/OBSOLETE
-
-   ## Service Binding
-   Pattern: UI_*_O2 / UI_*_O4 / API_*_O4
-   ```
+3. Check if `$SKILLS_PATH/project-config.md` exists. If missing, create it
+   with the standard template (see template at end of this section).
 
 4. For each skill in the core skill list:
 
-   **a. Check if wrapper already exists:**
-   If `$SKILLS_PATH/<skill-name>/SKILL.md` already exists → skip, mark as
-   "already present".
+   **a.** If `$SKILLS_PATH/<skill-name>/SKILL.md` already exists → skip,
+   mark as "already present".
 
-   **b. If wrapper is missing, create `$SKILLS_PATH/<skill-name>/SKILL.md`:**
+   **b.** If wrapper is missing, create `$SKILLS_PATH/<skill-name>/SKILL.md`:
 
    ```markdown
    ---
@@ -113,8 +113,8 @@ SKILL.md and configs/config.md stubs for every skill found in the core.
    Apply core instructions using the project context and all loaded config files.
    ```
 
-   **c. If the core skill has a `CONFIG_TEMPLATE.md` AND
-   `$SKILLS_PATH/<skill-name>/configs/config.md` does not yet exist, create it:**
+   **c.** If the core skill has a `CONFIG_TEMPLATE.md` AND
+   `$SKILLS_PATH/<skill-name>/configs/config.md` does not yet exist, create it:
 
    ```markdown
    # <skill-name> — Project Config
@@ -123,22 +123,97 @@ SKILL.md and configs/config.md stubs for every skill found in the core.
    See $CORE_PATH/skills/<skill-name>/CONFIG_TEMPLATE.md for required fields.
    ```
 
-   Skills without a CONFIG_TEMPLATE.md (e.g. `abap-skill-manager` itself) do
-   not get a configs/ folder.
+   Skills without a `CONFIG_TEMPLATE.md` (e.g. `abap-skill-manager` itself)
+   do not get a `configs/` folder.
 
-5. Print a summary table:
+5. Print summary table and next steps (see below).
 
-   | Skill | Wrapper | Config | Action |
-   |---|---|---|---|
-   | abap-code-review | ✓ | ✓ | skipped (already present) |
-   | abap-vs-reader | created | created | ✓ |
+---
 
-   Then: "Fill in `$SKILLS_PATH/project-config.md` and each `configs/config.md`.
-   Run `abap-skill-manager validate` to check for missing required fields."
+### `init` — Manual mode
+
+Skill SKILL.md files are already present in `$SKILLS_PATH/<skill>/` (copied
+by the user). Only create missing config stubs and `project-config.md`.
+
+**Steps:**
+
+1. Scan `$SKILLS_PATH/` — collect every subdirectory that contains a
+   `SKILL.md`. This is the **installed skill list**.
+
+2. Check if `$SKILLS_PATH/project-config.md` exists. If missing, create it
+   with the standard template.
+
+3. For each installed skill:
+
+   **a.** Check if a `CONFIG_TEMPLATE.md` exists in
+   `$SKILLS_PATH/<skill-name>/CONFIG_TEMPLATE.md`.
+
+   **b.** If yes and `$SKILLS_PATH/<skill-name>/configs/config.md` does not
+   yet exist, create it:
+
+   ```markdown
+   # <skill-name> — Project Config
+
+   TODO — Fill in required fields.
+   See $SKILLS_PATH/<skill-name>/CONFIG_TEMPLATE.md for required fields.
+   ```
+
+   Skills without a `CONFIG_TEMPLATE.md` do not get a `configs/` folder.
+
+4. Print summary table and next steps.
+
+---
+
+### `init` — Summary table (both modes)
+
+| Skill | Wrapper | Config | Action |
+|---|---|---|---|
+| abap-code-review | ✓ | ✓ | skipped (already present) |
+| abap-vs-reader | created | created | ✓ |
+
+Then: "Fill in `$SKILLS_PATH/project-config.md` and each `configs/config.md`.
+Run `abap-skill-manager validate` to check for missing required fields."
+
+---
+
+### project-config.md standard template
+
+```markdown
+# Project Configuration
+
+## Project
+Name: TODO — fill in project name
+System: TODO — SAP system ID (e.g. DEMO_001_EN)
+Platform: S/4HANA On-Premise
+Primary namespace: TODO — e.g. /DEMO/
+
+## DDIC Naming
+- Domain: TODO — e.g. /demo/do_*
+- Data Element: TODO — e.g. /demo/de_*
+- Structure: TODO — e.g. /demo/s_*
+- Table Type: TODO — e.g. /demo/t_*
+- DB Table: TODO — e.g. /demo/a_*
+- Draft Table: TODO — e.g. /demo/d_*
+
+## CDS Naming
+- Interface View: TODO — e.g. /demo/I_*
+- Projection View: TODO — e.g. /demo/C_*
+- Base View: TODO — e.g. /demo/R_*
+
+## RAP
+- Behavior Implementation Class: TODO — e.g. /demo/bp_<RootCDSViewEntityName>
+- Auth check class: TODO — e.g. /demo/cl_auth_check_*
+- Obsolete package: TODO — e.g. /DEMO/OBSOLETE
+
+## Service Binding
+Pattern: UI_*_O2 / UI_*_O4 / API_*_O4
+```
 
 ---
 
 ## Command: `update`
+
+### `update` — Submodule mode
 
 Pull the latest core skills, then initialise wrappers for any new skills that
 exist in the core but not yet in the project.
@@ -154,10 +229,10 @@ exist in the core but not yet in the project.
 2. Scan `$CORE_PATH/skills/` for all skill folders. Compare against
    `$SKILLS_PATH/` — collect skills that have no wrapper yet.
 
-3. If new skills are found, run the `init` logic (steps 4–5 from `init`) for
-   those skills only. Report each new wrapper created.
+3. If new skills are found, run the `init` logic (steps 4–5 of submodule
+   `init`) for those skills only. Report each new wrapper created.
 
-4. Stage the updated submodule pointer in the parent repo:
+4. Stage the updated submodule pointer:
    ```bash
    git add $CORE_PATH
    git status --short $CORE_PATH
@@ -169,23 +244,48 @@ exist in the core but not yet in the project.
 
 ---
 
+### `update` — Manual mode
+
+Automatic update is not available in manual mode.
+
+Tell the user:
+
+> **Manual install detected — automatic update not available.**
+>
+> To update skills to the latest version:
+> 1. Download or clone the latest core from
+>    `https://github.com/aliaksei-dunets-public/abap-skills-core`
+> 2. For each skill you use, replace:
+>    - `$SKILLS_PATH/<skill>/SKILL.md`
+>    - `$SKILLS_PATH/<skill>/references/` (if present)
+>    - `$SKILLS_PATH/<skill>/CONFIG_TEMPLATE.md` (if present)
+>    - `$SKILLS_PATH/<skill>/scripts/` (if present)
+> 3. Do **not** overwrite your `configs/` folder — that is your project config.
+> 4. After replacing files, run `abap-skill-manager validate` to check for
+>    new required fields introduced by the update.
+>
+> To switch to submodule mode and gain automatic updates, see
+> `abap-skill-manager instruction`.
+
+---
+
 ## Command: `status`
 
 Report the current state of the skills installation at a glance.
 
 **Steps:**
 
-1. Get current submodule SHA:
+1. Determine install mode (from Phase 0).
+
+2. **Submodule mode only:** collect version info:
    ```bash
    cd $CORE_PATH && git rev-parse --short HEAD
-   ```
-
-2. Get remote HEAD SHA:
-   ```bash
    cd $CORE_PATH && git fetch origin main --quiet 2>/dev/null && git rev-parse --short origin/main
    ```
 
-3. Scan `$CORE_PATH/skills/` for all skill folders.
+3. Build the skill list:
+   - Submodule mode: scan `$CORE_PATH/skills/`
+   - Manual mode: scan `$SKILLS_PATH/` for subdirectories with a `SKILL.md`
 
 4. For each skill, collect:
    - Wrapper exists? (`$SKILLS_PATH/<skill>/SKILL.md`)
@@ -196,18 +296,34 @@ Report the current state of the skills installation at a glance.
 
 6. Output:
 
+   **Submodule mode:**
    ```
    ## Skills Status
 
+   Install mode: submodule
    Core: <current-SHA>  Remote: <remote-SHA>  [UP TO DATE | BEHIND N commits — run: abap-skill-manager update]
 
-   | Skill                 | Wrapper | Config | TODOs | Notes                            |
-   |-----------------------|---------|--------|-------|----------------------------------|
-   | abap-code-review      | ✓       | ✓      | 0     |                                  |
-   | abap-run-unit-tests   | ✓       | ✓      | 2     | configs/config.md has 2 TODOs    |
-   | abap-skill-manager    | ✓       | —      | —     | no config required               |
-   | abap-unit-test-creator| ✓       | ✓      | 0     |                                  |
-   | abap-vs-reader        | ✓       | ✓      | 0     |                                  |
+   | Skill                 | Wrapper | Config | TODOs | Notes                         |
+   |-----------------------|---------|--------|-------|-------------------------------|
+   | abap-code-review      | ✓       | ✓      | 0     |                               |
+   | abap-run-unit-tests   | ✓       | ✓      | 2     | configs/config.md has 2 TODOs |
+   | abap-skill-manager    | ✓       | —      | —     | no config required            |
+   | abap-unit-test-creator| ✓       | ✓      | 0     |                               |
+   | abap-vs-reader        | ✓       | ✓      | 0     |                               |
+
+   project-config.md: ✓  (TODOs: 0)
+   ```
+
+   **Manual mode:**
+   ```
+   ## Skills Status
+
+   Install mode: manual (no submodule — update via abap-skill-manager update)
+
+   | Skill                 | SKILL.md | Config | TODOs | Notes                         |
+   |-----------------------|----------|--------|-------|-------------------------------|
+   | abap-code-review      | ✓        | ✓      | 0     |                               |
+   | abap-vs-reader        | ✓        | ✓      | 0     |                               |
 
    project-config.md: ✓  (TODOs: 0)
    ```
@@ -224,22 +340,25 @@ for every skill.
 1. Read `$SKILLS_PATH/project-config.md`. Flag any field whose value is `TODO`
    or is absent.
 
-2. For each skill in `$CORE_PATH/skills/` that has a `CONFIG_TEMPLATE.md`:
+2. Build CONFIG_TEMPLATE list:
+   - Submodule mode: read `$CORE_PATH/skills/<skill>/CONFIG_TEMPLATE.md`
+   - Manual mode: read `$SKILLS_PATH/<skill>/CONFIG_TEMPLATE.md`
+   - If CONFIG_TEMPLATE.md is missing for a skill, note "template not found —
+     cannot validate" and skip that skill.
 
-   a. Read the CONFIG_TEMPLATE.md — extract field names listed under
-      `## Required Fields`.
+3. For each skill with a CONFIG_TEMPLATE.md, extract field names listed under
+   `## Required Fields`. For each required field, check
+   `$SKILLS_PATH/<skill>/configs/config.md` and any `→ Read configs/*.md`
+   linked files. A field passes if it is present and its value does not
+   contain `TODO`.
 
-   b. For each required field, check `$SKILLS_PATH/<skill>/configs/config.md`
-      and any `→ Read configs/*.md` linked files. A field passes if it is
-      present and its value does not contain `TODO`.
-
-3. Output a validation report:
+4. Output a validation report:
 
    ```
    ## Validation Report
 
    ### project-config.md
-   ✓ primary_namespace: /HEC4/
+   ✓ primary_namespace: /DEMO/
    ✗ system — still contains TODO
 
    ### abap-code-review/configs/
@@ -263,15 +382,13 @@ for every skill.
 
 ## Command: `push`
 
-Stage, commit, and push all pending skills changes (wrappers, configs, and
-submodule pointer).
+Stage, commit, and push all pending skills changes.
 
 **Steps:**
 
 1. Check what has changed:
-   ```bash
-   git status --short $SKILLS_PATH $CORE_PATH
-   ```
+   - Submodule mode: `git status --short $SKILLS_PATH $CORE_PATH`
+   - Manual mode: `git status --short $SKILLS_PATH`
 
 2. If nothing changed: "Nothing to commit." and stop.
 
@@ -279,10 +396,16 @@ submodule pointer).
    confirmation before proceeding.
 
 4. Stage and commit:
-   ```bash
-   git add $SKILLS_PATH/ $CORE_PATH
-   git commit -m "chore: update ABAP skills config"
-   ```
+   - Submodule mode:
+     ```bash
+     git add $SKILLS_PATH/ $CORE_PATH
+     git commit -m "chore: update ABAP skills config"
+     ```
+   - Manual mode:
+     ```bash
+     git add $SKILLS_PATH/
+     git commit -m "chore: update ABAP skills config"
+     ```
 
 5. Push:
    ```bash
@@ -304,7 +427,11 @@ Output the architecture overview and setup guide below verbatim.
 ### Overview
 
 Three-layer architecture separating platform-independent skill logic from
-project-specific configuration:
+project-specific configuration. Two install modes are supported.
+
+---
+
+### Install Mode A — Submodule (recommended)
 
 ```
 abap-skills-core/          ← git submodule, shared across all projects
@@ -313,6 +440,7 @@ abap-skills-core/          ← git submodule, shared across all projects
       SKILL.md             ← core logic, no project names, /DEMO/ examples only
       CONFIG_TEMPLATE.md   ← documents required/recommended config fields
       references/          ← supporting reference files
+      scripts/             ← helper scripts (e.g. open-abap.ps1)
 
 .claude/skills/            ← project layer, committed to the project repo
   project-config.md        ← shared context: namespace, naming, system ID
@@ -320,44 +448,30 @@ abap-skills-core/          ← git submodule, shared across all projects
     SKILL.md               ← wrapper: reads core + project-config + config
     configs/
       config.md            ← required entry point (lazy-links other files)
-      naming.md            ← optional: linked from config.md as needed
-      system.md            ← optional: linked from config.md as needed
 ```
 
-### Three Layers
+**Layers:**
 
-**Layer 1 — Core skill (`abap-skills-core`):**
-Platform-independent. Updated via submodule. `/DEMO/` in examples only.
+- **Core** (`abap-skills-core`): platform-independent, `/DEMO/` in all examples.
+  Updated across all projects via `abap-skill-manager update`.
+- **Wrapper** (`skills/<skill>/SKILL.md`): thin file instructing the agent
+  to read `project-config.md` → core SKILL.md → `configs/config.md`.
+- **Config** (`skills/<skill>/configs/`): project-specific values.
+  `config.md` is always the entry point; lazy-links to additional files:
+  ```
+  → Read configs/naming.md for naming convention rules.
+  → Read configs/system.md for ADT connection details.
+  ```
 
-**Layer 2 — Project wrapper (`skills/<skill>/SKILL.md`):**
-Thin file telling the AI agent which files to read:
-`project-config.md` → core `SKILL.md` → `configs/config.md`.
+**Setup:**
 
-**Layer 3 — Project config (`skills/<skill>/configs/`):**
-`config.md` is always the entry point. Lazy-links to additional files:
-```
-→ Read configs/naming.md for naming convention rules.
-→ Read configs/system.md for ADT connection details.
-```
-
-### Supported Platforms
-
-| Platform | skills-core path | skills path |
-|---|---|---|
-| Claude Code | `.claude/skills-core` | `.claude/skills` |
-| GitHub Copilot Chat | `.agents/skills-core` | `.agents/skills` |
-
-### Setup — New Project
-
-**Step 1 — Add submodule:**
 ```bash
-# Claude Code
+# Step 1 — Add submodule (Claude Code)
 git submodule add https://github.com/aliaksei-dunets-public/abap-skills-core.git .claude/skills-core
 git submodule update --init
 ```
 
-> If git rejects due to `.gitignore`, use `-f` and add exclusions to
-> `.gitignore`:
+> If git rejects due to `.gitignore`, use `-f` and add these exclusions:
 > ```
 > !.claude/skills-core/
 > !.claude/skills-core/**
@@ -365,30 +479,88 @@ git submodule update --init
 > !.claude/skills/**
 > ```
 
-**Step 2 — Bootstrap wrappers:**
 ```
+# Step 2 — Bootstrap wrappers and config stubs
 abap-skill-manager init
-```
-Creates all wrapper SKILL.md files and config stubs.
 
-**Step 3 — Fill in configs:**
-Edit `project-config.md` and each `configs/config.md`.
-See each skill's `CONFIG_TEMPLATE.md` for required fields.
-Run `abap-skill-manager validate` to check nothing was missed.
+# Step 3 — Fill in project-config.md and each configs/config.md
+# See each skill's CONFIG_TEMPLATE.md for required fields
+abap-skill-manager validate
 
-**Step 4 — Commit:**
-```
+# Step 4 — Commit
 abap-skill-manager push
 ```
 
-### Updating Core Skills
-
+**Updating core skills:**
 ```
 abap-skill-manager update
 ```
-
 Pulls the latest core, creates wrappers for any newly added skills, and
 updates the submodule pointer.
+
+---
+
+### Install Mode B — Manual copy
+
+Use when git submodules are not practical or when you want to use a single
+skill without the full submodule setup.
+
+```
+.claude/skills/            ← project layer, committed to the project repo
+  project-config.md        ← shared context
+  <skill-name>/
+    SKILL.md               ← core logic copied directly (no wrapper)
+    CONFIG_TEMPLATE.md     ← copied from abap-skills-core
+    references/            ← copied from abap-skills-core
+    scripts/               ← copied from abap-skills-core
+    configs/
+      config.md            ← project-specific entry point
+```
+
+**Setup:**
+
+1. Download or clone `https://github.com/aliaksei-dunets-public/abap-skills-core`
+2. Copy the desired skill folder(s) from `skills/<skill-name>/` into
+   `$SKILLS_PATH/<skill-name>/`
+3. Create config stubs:
+   ```
+   abap-skill-manager init
+   ```
+4. Fill in `project-config.md` and each `configs/config.md`.
+5. Commit with `abap-skill-manager push`.
+
+**Important — abap-vs-reader script path:**
+
+In submodule mode, `abap-vs-reader/SKILL.md` references the script as:
+```
+.claude/skills-core/skills/abap-vs-reader/scripts/open-abap.ps1
+```
+In manual mode, the script is copied into the skill folder, so the path
+becomes:
+```
+.claude/skills/abap-vs-reader/scripts/open-abap.ps1
+```
+After copying, update the path in `$SKILLS_PATH/abap-vs-reader/SKILL.md`
+accordingly (search for `skills-core/skills/abap-vs-reader/scripts` and
+replace with `skills/abap-vs-reader/scripts`).
+
+**Trade-off vs submodule:**
+
+| | Submodule | Manual |
+|---|---|---|
+| Automatic updates | ✓ via `abap-skill-manager update` | ✗ manual file replacement |
+| New skill detection | ✓ automatic | ✗ manual copy |
+| No git submodule required | ✗ | ✓ |
+| Works offline / restricted envs | depends | ✓ |
+
+---
+
+### Supported Platforms
+
+| Platform | skills-core path | skills path |
+|---|---|---|
+| Claude Code | `.claude/skills-core` | `.claude/skills` |
+| GitHub Copilot Chat | `.agents/skills-core` | `.agents/skills` |
 
 ---
 
@@ -400,8 +572,9 @@ abap-skill-manager <command>
 Commands:
   init         Bootstrap skill wrappers and config stubs for a new project
   update       Pull latest core + init wrappers for any new skills
-  status       Submodule SHA, wrapper/config presence, TODO counts per skill
+               (submodule mode only — see instruction for manual mode)
+  status       Install mode, submodule SHA, wrapper/config presence, TODO counts
   validate     Check all required config fields are filled in
   push         Stage, commit, and push skills changes
-  instruction  Show architecture overview and setup guide
+  instruction  Show architecture overview and setup guide (both install modes)
 ```
