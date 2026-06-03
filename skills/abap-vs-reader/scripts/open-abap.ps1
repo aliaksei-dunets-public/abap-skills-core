@@ -16,8 +16,9 @@ Start-Sleep -Milliseconds 800
 $wshell.SendKeys("^+A")
 Start-Sleep -Milliseconds 800
 
-# Type the object name
-$wshell.SendKeys($ObjectName)
+# Copy object name to clipboard and paste — avoids keyboard layout issues with SendKeys
+Set-Clipboard -Value $ObjectName
+$wshell.SendKeys("^v")
 Start-Sleep -Milliseconds 1000
 
 # Confirm
