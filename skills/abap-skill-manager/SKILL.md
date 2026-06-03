@@ -265,7 +265,7 @@ exist in the core but not yet in the project.
 5. Print summary: skills updated, new wrappers created (if any), submodule
    pointer status.
 
-> **Note:** `references/source-reader.md` is the detection chain that skills use to fetch ABAP source (see "Source reading" above). Each consumer skill keeps its own copy of this file. A `git pull` on the submodule updates all copies at once. In manual mode, replace the file in each skill's `references/` folder manually.
+> **Note:** `references/source-reader.md` is the detection chain that skills use to fetch ABAP source (see Architecture section: "Source reading"). Each consumer skill keeps its own copy of this file. A `git pull` on the submodule updates all copies at once. In manual mode, replace the file in each skill's `references/` folder manually.
 
 ---
 
