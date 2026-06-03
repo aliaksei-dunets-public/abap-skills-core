@@ -363,6 +363,10 @@ for every skill.
 1. Read `$SKILLS_PATH/project-config.md`. Flag any field whose value is `TODO`
    or is absent.
 
+   Also check the `source_reader` field under `## Source Reader`:
+   - If absent: report as WARNING — "source_reader not set; defaulting to auto. Add `source_reader: auto` to project-config.md to suppress this warning."
+   - If present but not one of `auto`, `abap-vs-reader`, `mcp`, `ask`: report as ERROR — "source_reader has unknown value '<value>'. Allowed: auto | abap-vs-reader | mcp | ask."
+
 2. Build CONFIG_TEMPLATE list:
    - Submodule mode: read `$CORE_PATH/skills/<skill>/CONFIG_TEMPLATE.md`
    - Manual mode: read `$SKILLS_PATH/<skill>/CONFIG_TEMPLATE.md`
@@ -382,6 +386,7 @@ for every skill.
 
    ### project-config.md
    ✓ primary_namespace: /DEMO/
+   ✓ source_reader: auto
    ✗ system — still contains TODO
 
    ### abap-code-review/configs/
@@ -485,6 +490,7 @@ abap-skills-core/          ← git submodule, shared across all projects
   → Read configs/naming.md for naming convention rules.
   → Read configs/system.md for ADT connection details.
   ```
+- **`source_reader`** (`project-config.md` → `## Source Reader`): controls how skills fetch ABAP source. Values: `auto` (default) | `abap-vs-reader` | `mcp` | `ask`. With `auto`, skills probe for an MCP read tool first, then fall back to `abap-vs-reader`, then ask the user. Skills that use this field: `abap-code-review`, `abap-unit-test-creator`.
 
 **Setup:**
 
