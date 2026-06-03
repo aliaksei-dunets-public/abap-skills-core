@@ -9,20 +9,22 @@ Follow the detection chain below exactly. Stop at the first step that succeeds.
 
 ### Step 1 — Check project config
 
-Read `project-config.md`. Look for the `source_reader` field under
-`## Source Reader`.
+Read `project-config.md` if it exists. Look for the `source_reader` field under
+`## Source Reader`. If the file does not exist or the field is absent, treat it
+as `source_reader: auto` and continue to Step 2.
 
 - `source_reader: abap-vs-reader` → skip to Step 3
 - `source_reader: mcp`            → skip to Step 2
 - `source_reader: ask`            → skip to Step 4
-- field absent or `source_reader: auto` → continue to Step 2
 
 ### Step 2 — Probe for MCP read tool
 
 Check whether an MCP tool is available whose name or description contains
 `read` AND one of: `source`, `object`, `abap`.
 
-- Tool found → invoke it with the object name → **done**
+- Tool found → invoke it with the object name
+  - Source returned → **done**
+  - Tool errors or returns no source → continue to Step 3
 - No tool found → continue to Step 3
 
 ### Step 3 — Probe for abap-vs-reader skill
