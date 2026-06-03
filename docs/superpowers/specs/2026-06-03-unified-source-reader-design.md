@@ -153,16 +153,20 @@ Three updates:
 ```
 abap-skills-core/
 ├── references/
-│   └── source-reader.md            ← NEW
+│   └── source-reader.md                    ← master copy (source of truth)
 ├── skills/
 │   ├── abap-code-review/
-│   │   └── SKILL.md                ← update Phase 1 B/C
+│   │   ├── references/
+│   │   │   └── source-reader.md            ← NEW (copy of master)
+│   │   └── SKILL.md                        ← update Phase 1 B/C
 │   ├── abap-unit-test-creator/
-│   │   ├── SKILL.md                ← update Step 1
-│   │   └── CONFIG_TEMPLATE.md      ← remove source_retrieval_tool
+│   │   ├── references/
+│   │   │   └── source-reader.md            ← NEW (copy of master)
+│   │   ├── SKILL.md                        ← update Step 1
+│   │   └── CONFIG_TEMPLATE.md              ← remove source_retrieval_tool
 │   ├── abap-skill-manager/
-│   │   └── SKILL.md                ← update init/validate/instruction
-│   └── abap-vs-reader/             ← no changes
+│   │   └── SKILL.md                        ← update init/validate/instruction
+│   └── abap-vs-reader/                     ← no changes
 └── docs/superpowers/specs/
     └── 2026-06-03-unified-source-reader-design.md
 ```
@@ -171,22 +175,31 @@ abap-skills-core/
 
 ## Path Conventions
 
-Skills reference `source-reader.md` as `../../references/source-reader.md`
-(relative from `skills/<skill-name>/`).
+`source-reader.md` lives inside **each skill's own `references/` folder**:
 
-In submodule install mode the actual resolved path is:
-`.claude/skills-core/references/source-reader.md`
+```
+skills/abap-code-review/references/source-reader.md
+skills/abap-unit-test-creator/references/source-reader.md
+skills/abap-run-unit-tests/references/source-reader.md   ← when implemented
+```
 
-In manual install mode the file is at:
-`.claude/skills/<skill-name>/../../references/source-reader.md`
-which means it must be copied to `.claude/skills/../references/` — i.e. one
-level above the skills folder. `abap-skill-manager` handles this copy during
-`init` (manual mode) and `update`.
+Skills reference it as `references/source-reader.md` (local, always resolvable
+regardless of install mode). The canonical master copy lives at
+`abap-skills-core/references/source-reader.md` and is the single source of
+truth.
 
-> **Note:** if the relative path proves fragile across environments, an
-> alternative is to place `source-reader.md` inside each skill's own
-> `references/` folder and have `abap-skill-manager update` keep them in sync.
-> This is the fallback if path resolution causes problems in practice.
+**Keeping copies in sync:**
+
+- **Submodule mode:** all skill `references/` folders are inside the submodule
+  itself, so `abap-skill-manager update` (which runs `git pull` on the core)
+  automatically gets the latest copy for all skills at once.
+- **Manual mode:** `abap-skill-manager update` copies the file from each
+  skill's `references/` in the downloaded core into the corresponding skill
+  folder in `$SKILLS_PATH`. No path outside `$SKILLS_PATH` is touched.
+
+`abap-skill-manager validate` checks that `references/source-reader.md` exists
+inside every skill that is expected to use it (`abap-code-review`,
+`abap-unit-test-creator`). Missing file → validation error.
 
 ---
 
