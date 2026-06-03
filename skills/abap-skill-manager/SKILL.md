@@ -229,7 +229,7 @@ Primary namespace: TODO — e.g. /DEMO/
 Pattern: UI_*_O2 / UI_*_O4 / API_*_O4
 
 ## Source Reader
-source_reader: auto
+source_reader: auto   # auto | abap-vs-reader | mcp | ask
 ```
 
 ---
@@ -265,7 +265,7 @@ exist in the core but not yet in the project.
 5. Print summary: skills updated, new wrappers created (if any), submodule
    pointer status.
 
-> **Note:** `references/source-reader.md` inside each consumer skill is a copy of the master in `abap-skills-core/references/`. A `git pull` on the submodule updates all copies at once. In manual mode, replace the file in each skill's `references/` folder manually.
+> **Note:** `references/source-reader.md` is the detection chain that skills use to fetch ABAP source (see "Source reading" above). Each consumer skill keeps its own copy of this file. A `git pull` on the submodule updates all copies at once. In manual mode, replace the file in each skill's `references/` folder manually.
 
 ---
 
@@ -366,7 +366,7 @@ for every skill.
    or is absent.
 
    Also check the `source_reader` field under `## Source Reader`:
-   - If absent: report as WARNING — "source_reader not set; defaulting to auto. Add `source_reader: auto` to project-config.md to suppress this warning."
+   - If absent: report as WARNING — "source_reader not set; defaulting to auto. To suppress this warning, the project owner should add `source_reader: auto` under `## Source Reader` in project-config.md."
    - If present but not one of `auto`, `abap-vs-reader`, `mcp`, `ask`: report as ERROR — "source_reader has unknown value '<value>'. Allowed: auto | abap-vs-reader | mcp | ask."
 
 2. Build CONFIG_TEMPLATE list:
@@ -492,7 +492,10 @@ abap-skills-core/          ← git submodule, shared across all projects
   → Read configs/naming.md for naming convention rules.
   → Read configs/system.md for ADT connection details.
   ```
-- **`source_reader`** (`project-config.md` → `## Source Reader`): controls how skills fetch ABAP source. Values: `auto` (default) | `abap-vs-reader` | `mcp` | `ask`. With `auto`, skills probe for an MCP read tool first, then fall back to `abap-vs-reader`, then ask the user. Skills that use this field: `abap-code-review`, `abap-unit-test-creator`.
+
+**Source reading:**
+
+The `source_reader` field in `project-config.md` (under `## Source Reader`) controls how skills fetch ABAP source. Values: `auto` (default) | `abap-vs-reader` | `mcp` | `ask`. With `auto`, skills probe for an MCP read tool first, then fall back to `abap-vs-reader`, then ask the user. Skills that use this field: `abap-code-review`, `abap-unit-test-creator`.
 
 **Setup:**
 
