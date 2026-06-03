@@ -61,6 +61,26 @@ Use `SKILLS_PATH`, `INSTALL_MODE`, and `CORE_PATH` as shorthand throughout.
 
 ---
 
+## Config Safety Rule
+
+**This skill never deletes or replaces content in any config file.**
+
+When a command needs to add information to an existing config file
+(`project-config.md`, `configs/config.md`, or any linked config file):
+
+- **Append only** — add new content at the end of the file.
+- **Never overwrite** — do not modify or remove existing lines.
+- **Always inform** — after any append, tell the user exactly what was added
+  and to which file:
+  > Added to `configs/config.md`:
+  > ```
+  > <appended content>
+  > ```
+
+This rule applies to all commands: `init`, `update`, and `validate`.
+
+---
+
 ## Command Dispatch
 
 Parse $ARGUMENTS. If no argument or an unrecognised argument is provided,
