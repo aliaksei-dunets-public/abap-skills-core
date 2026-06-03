@@ -9,13 +9,15 @@ Follow the detection chain below exactly. Stop at the first step that succeeds.
 
 ### Step 1 — Check project config
 
-Read `project-config.md` if it exists. Look for the `source_reader` field under
-`## Source Reader`. If the file does not exist or the field is absent, treat it
-as `source_reader: auto` and continue to Step 2.
+Look for the `source_reader` field under `## Source Reader` in the project
+config already loaded into context (the wrapper reads `project-config.md`
+before invoking this skill — do not read `project-config.md` here). If the
+field is not in context, treat it as `source_reader: auto`.
 
 - `source_reader: abap-vs-reader` → skip to Step 3
 - `source_reader: mcp`            → skip to Step 2
 - `source_reader: ask`            → skip to Step 4
+- `source_reader: auto` or absent → continue to Step 2
 
 ### Step 2 — Probe for MCP read tool
 
