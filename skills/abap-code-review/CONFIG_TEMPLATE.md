@@ -13,11 +13,23 @@
 - `service_binding_suffix_rules` — Naming rules for Service Definition and Service Binding (NAME-07)
 - `obsolete_package` — Package where obsolete objects should be assigned (DOC-05)
 
-## Optional Fields
+## Category Control
 
-- `naming_exceptions` — list of object names exempt from NAME-01 check
-- `rule_suppressions` — rule IDs to suppress entirely for this project (e.g. DOC-03 if KT docs are tracked externally)
+- `active_categories` — Run only the listed category codes; all others are skipped. Takes precedence over `skip_categories`.
+  Example: `active_categories: [PERF, CLEAN, RAP]`
+- `skip_categories` — Skip the listed category codes entirely.
+  Example: `skip_categories: [DOC, TEST]`
+
+## Rule Suppression
+
+- `rule_suppressions` — Rule IDs to suppress across all objects.
+  Example: `rule_suppressions: [DOC-03, NAME-05]`
+  Use when a rule is systematically irrelevant for the project (e.g. `DOC-03` when KT docs are tracked externally).
 
 ## Lazy Loading
 
-config.md is the required entry point. Use `→ Read configs/naming.md for ...` to link additional files.
+`config.md` is the required entry point. Use `→ Read configs/naming.md for ...` to link additional files.
+
+## Global Behaviour
+
+Rules that reference a config field are skipped silently when that field is absent — no "not checked" entry is written to the report.

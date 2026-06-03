@@ -1,32 +1,28 @@
-# Naming Convention
+# Naming Convention Rules (NAME)
 
-This guide is a generic baseline, not a project law book. If the workspace or the user provides an explicit naming overlay, that local rule set takes precedence over the examples in this file.
+This is a generic baseline. If the workspace provides an explicit naming overlay via `configs/config.md`, that rule set takes precedence over the examples here.
 
 ## Principles
 
-- names should reflect role and business meaning
-- names should stay consistent within the object and its immediate collaborators
-- abbreviations should only be used when their meaning is clear in context
+- Names should reflect role and business meaning.
+- Names should stay consistent within the object and its immediate collaborators.
+- Abbreviations should only be used when their meaning is clear in context.
 
-## Generic Baseline Examples
+## Rules
 
-- importing parameters often use `i_`
-- exporting parameters often use `e_`
-- changing parameters often use `c_`
-- returning parameters often use `r_`
-- constants often use `co_`
-- structures and tables often use `s_`, `t_`, `ts_`, and `tt_`
-- object references often use `lo_`, `mo_`, or another locally consistent form
-
-## What To Flag
-
-- returning parameters that obscure intent
-- constants without any consistent constant marker in a codebase that otherwise uses one
-- ambiguous abbreviations with no domain meaning
-- mixed naming schemes inside the same object
+| Rule ID | What to check | Severity |
+|---------|--------------|----------|
+| NAME-01 | Object name not starting with the project namespace prefix (`primary_namespace` from config) | WARNING |
+| NAME-02 | DDIC objects (Domain, Data Element, Structure, Table Type, DB Table) not following project naming rules (`ddic_naming_rules` from config) | WARNING |
+| NAME-03 | CDS/RAP objects (Interface View, Projection View, Base View, Draft table, TP view) not following project view naming rules (`cds_naming_rules` from config) | WARNING |
+| NAME-04 | Behavior Implementation Class not following project BP class naming pattern (`bp_class_pattern` from config) | WARNING |
+| NAME-05 | Local handler class not named `lhc_<Name>` or local saver class not named `lsc_<Name>` | INFO |
+| NAME-06 | Method IMPORTING parameters not prefixed `I_`, EXPORTING `E_`, CHANGING `C_`, RETURNING `R_` — exception: RAP-generated parameter names must NOT be renamed | INFO |
+| NAME-07 | Service Definition missing a semantic name, or Service Binding missing the protocol-type suffix (`service_binding_suffix_rules` from config) | WARNING |
+| NAME-08 | Mixed variable naming styles within the same class body — only report when two identifiably different schemes are used side-by-side | INFO |
 
 ## What Not To Do
 
-- do not report a project-specific prefix rule as universal ABAP truth
-- do not escalate naming issues above behavioral or contract defects
-- do not treat a different but internally consistent local scheme as automatically wrong
+- Do not report a project-specific prefix rule as universal ABAP truth.
+- Do not escalate naming issues above behavioral or contract defects.
+- Do not treat a different but internally consistent local scheme as automatically wrong.
