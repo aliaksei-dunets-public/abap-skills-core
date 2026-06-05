@@ -72,16 +72,22 @@ implies `Classes`).
 
 ### Step 2.3 — Map object type label to ADT subdirectory
 
-| Path segment | `.adt/` subdirectory |
-|---|---|
-| `Classes` | `classlib/classes` |
-| `Interfaces` | `classlib/interfaces` |
-| `Data Definitions` | `ddic/ddl/sources` |
-| `Behavior Definitions` | `wbobj` |
-| `Programs` | `programs` |
-| `Function Groups` | `functions/groups` |
-| `Database Tables` | `ddic/tables` |
-| `Structures` | `ddic/structures` |
+| Path segment / object type hint | `.adt/` subdirectory | Source extension(s) |
+|---|---|---|
+| `Classes` | `classlib/classes` | `.aclass`, `.acinc` |
+| `Interfaces` | `classlib/interfaces` | `.aint` |
+| `Data Definitions` | `ddic/ddlsources` | `.asddls` |
+| `Metadata Extensions` | `wbobj2/ddic/ddlxex` | `.asddlxex` |
+| `Behavior Definitions` | `wbobj2/bo/bdef` | `.asbdef` |
+| `Service Definitions` | `ddic/srvdsources` | `.assrvds` |
+| `Service Bindings` | `wbobj/businessservices/bindings` | `.srvbsvb` (XML metadata only) |
+| `Programs` | `programs` | `.prog` |
+| `Function Groups` | `functions/groups` | `.fugr` |
+| `Database Tables` | `ddic/tables` | `.tabl` |
+| `Structures` | `ddic/structures` | `.stru` |
+
+Skip files with these extensions — they are ADT metadata, not source:
+`.apclass`, `.apint`, `.apddls`, `.apddlxex`, `.apbdef`, `.apsrvds`, `.aptec`, `.$$$`
 
 If the type label is not in this table, use `wbobj` as a fallback and warn the user.
 
@@ -130,20 +136,19 @@ object could not be found in the cache and stop.
 
 ### Step 2.7 — Select files to read
 
-**For class objects** (`classlib/classes`): filter by file extension — read
-`.aclass` and `.acinc` files, skip `.apclass` and `.$$$`. Apply the `include_type`
-filter:
+**For class objects** (`classlib/classes`): apply the `include_type` filter:
 
 | `include_type` | Files to read |
 |---|---|
-| `all` (default) | `.aclass`, `definitions.acinc`, `implementations.acinc`, `testclasses.acinc` |
-| `implementations` | `implementations.acinc` only |
-| `testclasses` | `testclasses.acinc` only |
-| `definitions` | `definitions.acinc` only |
+| `all` (default) | `.aclass` + all `.acinc` (`definitions`, `implementations`, `testclasses`, `macros`) |
+| `implementations` | `*implementations.acinc` only |
+| `testclasses` | `*testclasses.acinc` only |
+| `definitions` | `*definitions.acinc` only |
 | `main` | `.aclass` only |
 
-**For all other object types:** read all files in the directory except `.apclass`
-and `.$$$` files.
+**For interface objects** (`classlib/interfaces`): read the `.aint` file.
+
+**For all other object types**: read the single source file matching the extension from the Step 2.3 table. Skip `.ap*`, `.$$$`, `.astec`, `.prefs`, `.project`, `.properties`, `.devck` — these are ADT metadata/text elements, not editable source.
 
 ### Step 2.8 — Read and return the source
 
@@ -156,3 +161,31 @@ Read each selected file using the Read tool. Present each file labelled by filen
 
 If multiple files are read, separate them with blank lines between the labelled
 sections.
+
+---
+
+## Phase 3 — Editing ABAP Objects
+
+The ADT VSCode extension cache files **are** the live source files used by the editor.
+Editing them directly with the Edit tool is the correct way to make code changes —
+the extension detects the modification and syncs it to the SAP system.
+
+**Rules by object type:**
+
+| Object type | Editable file(s) | Notes |
+|---|---|---|
+| Class — definition | `.aclass` | PUBLIC/PROTECTED/PRIVATE sections |
+| Class — implementation | `.aclass` or `*implementations.acinc` | Use `.acinc` if it exists and is non-empty |
+| Class — local types | `*definitions.acinc` | Local class/type declarations |
+| Class — test classes | `*testclasses.acinc` | ABAP Unit tests |
+| Interface | `.aint` | Full interface source |
+| CDS View / Abstract Entity | `.asddls` | DDL source |
+| Metadata Extension | `.asddlxex` | UI annotations |
+| Behavior Definition (BDEF) | `.asbdef` | RAP behavior definition |
+| Service Definition | `.assrvds` | `define service` source |
+| Service Binding | `.srvbsvb` | XML — generally read-only, edit with caution |
+
+**General rules:**
+- Never edit `.ap*`, `.$$$`, `.astec`, `.prefs`, `.project`, `.properties`, `.devck` — these are ADT metadata files.
+- Never create new cache files manually — only edit files that already exist (the object must have been opened in VS Code at least once).
+- After editing, remind the user to verify the syntax check and activate the object in VS Code.
