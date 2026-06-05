@@ -30,6 +30,38 @@ Extract the following fields from `configs/system.md`:
 If any of these fields are missing or the file does not exist, tell the user which
 field is missing, refer them to `configs/system.md`, and stop.
 
+### Step 1.1 — Validate cache_base
+
+VSCode can create multiple `workspaceStorage` directories for the same workspace over
+time. Validate that the configured `cache_base` is active before proceeding.
+
+Run:
+```bash
+ls "<cache_base>/.adt/classlib/classes/" 2>/dev/null && echo "VALID" || echo "INVALID"
+```
+
+**If VALID:** proceed to Phase 2.
+
+**If INVALID:** the configured `cache_base` is stale. Search all `workspaceStorage`
+directories for the active ADT cache for this system:
+
+```bash
+find "$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "<cache_base>")")")")")")")")" \
+  -maxdepth 12 -type d \
+  -path "*/SAPSE.adt-vscode/adtWorkspace/.metadata/.plugins/org.eclipse.core.resources.semantic/.cache/<system_id>/.adt/classlib/classes" \
+  2>/dev/null
+```
+
+Where `<system_id>` is the value from config.
+
+- If **one result** is found: derive the new `cache_base` by stripping `/.adt/classlib/classes`
+  from the found path. Update `cache_base` in `configs/system.md`, inform the user, and continue.
+- If **multiple results** are found: pick the one with the most recently modified
+  `.adt/classlib/classes/` directory (run `ls -lt` on each result and take the first).
+  Update `cache_base` in `configs/system.md`, inform the user, and continue.
+- If **no result** is found: tell the user the ADT cache for `<system_id>` was not
+  found in any `workspaceStorage`, and stop.
+
 ---
 
 ## Phase 2 — Resolve and Read Artifact
