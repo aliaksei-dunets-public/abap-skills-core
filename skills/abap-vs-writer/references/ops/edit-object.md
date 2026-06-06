@@ -28,7 +28,7 @@ Read `abap-vs-reader` Phase 2 (Steps 2.3–2.6) for:
 | Object type | File to edit | Notes |
 |---|---|---|
 | Class — definitions | `.aclass` | PUBLIC/PROTECTED/PRIVATE sections |
-| Class — implementation | `*implementations.acinc` | Method bodies |
+| Class — implementation | `*implementations.acinc` or `.aclass` | Use `.acinc` if it exists and is non-empty |
 | Class — local types | `*definitions.acinc` | Local class/type declarations |
 | Class — test classes | `*testclasses.acinc` | ABAP Unit tests |
 | Interface | `.aint` | Full interface source |
@@ -36,8 +36,11 @@ Read `abap-vs-reader` Phase 2 (Steps 2.3–2.6) for:
 | Metadata Extension | `.asddlxex` | UI annotations |
 | Behavior Definition | `.asbdef` | RAP behavior definition |
 | Service Definition | `.assrvds` | `define service` source |
+| Service Binding | `.srvbsvb` | XML — generally read-only, edit with caution |
 
-Never edit `.ap*`, `.$$$`, `.astec`, `.prefs`, `.project`, `.properties`, `.devck`.
+**Rules:**
+- Never edit `.ap*`, `.$$$`, `.astec`, `.prefs`, `.project`, `.properties`, `.devck` — ADT metadata.
+- Never create new cache files manually — only edit files that already exist (object must have been opened in VS Code at least once).
 
 ---
 

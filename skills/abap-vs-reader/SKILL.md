@@ -193,31 +193,3 @@ Read each selected file using the Read tool. Present each file labelled by filen
 
 If multiple files are read, separate them with blank lines between the labelled
 sections.
-
----
-
-## Phase 3 — Editing ABAP Objects
-
-The ADT VSCode extension cache files **are** the live source files used by the editor.
-Editing them directly with the Edit tool is the correct way to make code changes —
-the extension detects the modification and syncs it to the SAP system.
-
-**Rules by object type:**
-
-| Object type | Editable file(s) | Notes |
-|---|---|---|
-| Class — definition | `.aclass` | PUBLIC/PROTECTED/PRIVATE sections |
-| Class — implementation | `.aclass` or `*implementations.acinc` | Use `.acinc` if it exists and is non-empty |
-| Class — local types | `*definitions.acinc` | Local class/type declarations |
-| Class — test classes | `*testclasses.acinc` | ABAP Unit tests |
-| Interface | `.aint` | Full interface source |
-| CDS View / Abstract Entity | `.asddls` | DDL source |
-| Metadata Extension | `.asddlxex` | UI annotations |
-| Behavior Definition (BDEF) | `.asbdef` | RAP behavior definition |
-| Service Definition | `.assrvds` | `define service` source |
-| Service Binding | `.srvbsvb` | XML — generally read-only, edit with caution |
-
-**General rules:**
-- Never edit `.ap*`, `.$$$`, `.astec`, `.prefs`, `.project`, `.properties`, `.devck` — these are ADT metadata files.
-- Never create new cache files manually — only edit files that already exist (the object must have been opened in VS Code at least once).
-- After editing, remind the user to verify the syntax check and activate the object in VS Code.
