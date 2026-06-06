@@ -10,8 +10,10 @@ ATC checks may or may not be exposed by the ADT MCP server. Before proceeding,
 call `abap_list_destinations` and check whether any `abap_atc_*` tools are
 listed in the available tools.
 
-**If ATC tools are available:** use the tool with the object URI (same format as
-`abap_activate_objects`). Report all findings with severity, message, and location.
+**If ATC tools are available:** identify the exact tool name from the listing step
+(look for tools starting with `abap_atc_`). Call it with the object URI (same format
+as `abap_activate_objects`). Common tool name: `abap_atc_run` — but verify the exact
+name first. Report all findings with severity, message, and location.
 
 **If ATC tools are NOT available:** inform the user:
 

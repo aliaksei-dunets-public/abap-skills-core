@@ -41,7 +41,7 @@ Load only the reference files that match the current task. Do not load all files
 
 | Signal in user request | Reference files to load |
 |------------------------|------------------------|
-| create / новый / class / interface / CDS / BDEF / service binding / service definition / interface / domain / data element | `references/ops/create-object.md` + `references/object-types.md` |
+| create / новый / class / interface / CDS / BDEF / service binding / service definition | `references/ops/create-object.md` + `references/object-types.md` |
 | activate / активировать / активация | `references/ops/activate.md` + `references/uri-patterns.md` |
 | unit test / run tests / тесты / запустить тесты | `references/ops/run-unit-tests.md` + `references/uri-patterns.md` |
 | transport / TR / транспорт / задание переноса | `references/ops/transport.md` |

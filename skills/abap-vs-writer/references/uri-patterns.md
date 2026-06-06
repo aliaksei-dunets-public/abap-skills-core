@@ -56,6 +56,12 @@ Base: `abap:/repotree-v1/{DEST}/System%20Library/{PKG_ENC}/Source%20Library/{PKG
 For namespace packages like `(HEC4)PP`:
 `(HEC4)PP` → `%28HEC4%29PP`
 
+### Package Object — Full Example (ZMYPKG, class ZCL_MY_CLASS)
+
+```
+abap:/repotree-v1/ISD_001_C5227045_EN/System%20Library/ZMYPKG/Source%20Library/ZMYPKG/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap
+```
+
 The object type folders and file extensions are the same as for $TMP objects above.
 
 ---

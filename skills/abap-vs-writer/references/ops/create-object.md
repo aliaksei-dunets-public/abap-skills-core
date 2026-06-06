@@ -20,8 +20,13 @@ Call `abap_creation-run_validation`:
 ```
 destination:   {destination from config}
 objectType:    {objectType from object-types.md, e.g. "CLAS/OC"}
-objectContent: "{\"packageName\":\"{PKG}\",\"name\":\"{NAME_UPPER}\",\"description\":\"{description}\"}"
+objectContent: "{\"packageName\":\"{PACKAGE_NAME}\",\"name\":\"{NAME_UPPER}\",\"description\":\"{description}\"}"
 ```
+
+**Placeholder values:**
+- `{PACKAGE_NAME}` — the package name, e.g. `$TMP` or `ZMYPKG`
+- `{NAME_UPPER}` — the object name in uppercase, e.g. `ZCL_MY_CLASS`
+- `{description}` — the description text the user provided
 
 **objectContent rules:**
 - Must be a JSON-encoded **string** — not a raw object

@@ -42,7 +42,7 @@ isCreation:           true | false
 ```
 
 Report the new TR number to the user. Then use it as `transportRequestNumber`
-in `create_object`.
+in `abap_creation-create_object`.
 
 ---
 
