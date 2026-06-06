@@ -5,13 +5,13 @@ service binding) in 3 steps.
 
 ---
 
-## Known Generators on ISD_001_C5227045_EN
+## Known Generators on S/4HANA (example system)
 
 | Title | generatorId | referencedObjectTypes | Notes |
 |---|---|---|---|
-| OData UI Service | `ui-service` | TABL;BDEF;DDLS | **NOT available** — returns "Generator does not exist" |
-| OData Web API Service | `webapi-service` | TABL | Available |
-| OData UI Service from Scratch | `x-ui-service` | *(none)* | Available — recommended for new services |
+| OData UI Service | `ui-service` | TABL;BDEF;DDLS | May not be available on all systems — returns "Generator does not exist" if absent |
+| OData Web API Service | `webapi-service` | TABL | Available on most systems |
+| OData UI Service from Scratch | `x-ui-service` | *(none)* | Available on most systems — recommended for new services |
 
 Use `x-ui-service` for a new UI service with no existing table reference.
 Use `webapi-service` for a Web API service based on an existing table.

@@ -9,8 +9,8 @@ field returned by `abap_creation-create_object` — use these patterns only when
 
 | Placeholder | Value |
 |---|---|
-| `{DEST}` | destination from config, e.g. `ISD_001_C5227045_EN` |
-| `{USER}` | SAP username uppercase, e.g. `C5227045` |
+| `{DEST}` | destination from config, e.g. `DEMO_001_EN` |
+| `{USER}` | SAP username uppercase, e.g. `DEMOUSER` |
 | `{NAME_UPPER}` | Object name uppercase, e.g. `ZCL_MY_CLASS` |
 | `{name_lower}` | Object name lowercase, e.g. `zcl_my_class` |
 | `{PKG_ENC}` | URL-encoded package path segment (see Package Objects section) |
@@ -35,13 +35,13 @@ Base: `abap:/repotree-v1/{DEST}/Local%20Objects%20%28%24TMP%29/{USER}/Source%20C
 ### $TMP Class — Full Example
 
 ```
-abap:/repotree-v1/ISD_001_C5227045_EN/Local%20Objects%20%28%24TMP%29/C5227045/Source%20Code%20Library/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap
+abap:/repotree-v1/DEMO_001_EN/Local%20Objects%20%28%24TMP%29/DEMOUSER/Source%20Code%20Library/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap
 ```
 
 ### $TMP Interface — Full Example
 
 ```
-abap:/repotree-v1/ISD_001_C5227045_EN/Local%20Objects%20%28%24TMP%29/C5227045/Source%20Code%20Library/Interfaces/ZIF_MY_INTERFACE/zif_my_interface.intf.abap
+abap:/repotree-v1/DEMO_001_EN/Local%20Objects%20%28%24TMP%29/DEMOUSER/Source%20Code%20Library/Interfaces/ZIF_MY_INTERFACE/zif_my_interface.intf.abap
 ```
 
 ---
@@ -53,13 +53,13 @@ Base: `abap:/repotree-v1/{DEST}/System%20Library/{PKG_ENC}/Source%20Library/{PKG
 `{PKG_ENC}` is the URL-encoded package name. Example for package `ZMYPKG`:
 `ZMYPKG` → `ZMYPKG` (no encoding needed for alphanumeric names).
 
-For namespace packages like `(HEC4)PP`:
-`(HEC4)PP` → `%28HEC4%29PP`
+For namespace packages like `(DEMO)PP`:
+`(DEMO)PP` → `%28DEMO%29PP`
 
 ### Package Object — Full Example (ZMYPKG, class ZCL_MY_CLASS)
 
 ```
-abap:/repotree-v1/ISD_001_C5227045_EN/System%20Library/ZMYPKG/Source%20Library/ZMYPKG/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap
+abap:/repotree-v1/DEMO_001_EN/System%20Library/ZMYPKG/Source%20Library/ZMYPKG/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap
 ```
 
 The object type folders and file extensions are the same as for $TMP objects above.

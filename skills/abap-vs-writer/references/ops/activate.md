@@ -47,8 +47,8 @@ Report the full `objectDiagnostics` array. Common causes:
 
 ## Example
 
-Activate class `ZCL_MY_CLASS` in `$TMP` (user `C5227045`, dest `ISD_001_C5227045_EN`):
+Activate class `ZCL_MY_CLASS` in `$TMP` (user `DEMOUSER`, dest `DEMO_001_EN`):
 
 ```
-uris: ["abap:/repotree-v1/ISD_001_C5227045_EN/Local%20Objects%20%28%24TMP%29/C5227045/Source%20Code%20Library/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap"]
+uris: ["abap:/repotree-v1/DEMO_001_EN/Local%20Objects%20%28%24TMP%29/DEMOUSER/Source%20Code%20Library/Classes/ZCL_MY_CLASS/zcl_my_class.clas.abap"]
 ```

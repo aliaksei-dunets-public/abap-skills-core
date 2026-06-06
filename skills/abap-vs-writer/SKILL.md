@@ -26,7 +26,7 @@ discovery calls needed.
 Read `configs/system.md` (loaded via the project config chain).
 
 Extract:
-- `destination` — ABAP system connection ID (e.g. `ISD_001_C5227045_EN`)
+- `destination` — ABAP system connection ID (e.g. `DEMO_001_EN`)
 
 If the field is missing or `configs/system.md` does not exist: stop, tell the user
 which field is absent, and refer them to `CONFIG_TEMPLATE.md`.
