@@ -25,7 +25,7 @@ primary_namespace: (DEMO)
 
 | Field | Format | Description |
 |---|---|---|
-| `system_id` | `<ID>` e.g. `ABC_001_C5227045_EN` | SAP system connection ID as shown in the ADT VSCode extension. Must match the segment immediately after `/repotree-v1/` in ADT paths. |
+| `system_id` | `<ID>` e.g. `ABC_001_DEMOUSER_EN` | SAP system connection ID as shown in the ADT VSCode extension. Must match the segment immediately after `/repotree-v1/` in ADT paths. |
 | `cache_base` | Absolute path | Full path to the ADT VSCode extension cache root for this system. This is the directory that contains the `.adt/` subdirectory tree. |
 | `repotree_package_path` | URL-encoded path | The package path segment used in repotree URIs, e.g. `System%20Library/(DEMO)PKG/Source%20Library/(DEMO)PKG`. Used when constructing full repotree URIs for display or linking. |
 
