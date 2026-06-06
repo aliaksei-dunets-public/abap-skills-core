@@ -59,3 +59,27 @@ reference files.
 Follow the instructions in the loaded reference file(s). Use `destination` from
 Phase 0 in every MCP tool call. Do not call `abap_creation-get_object_type_details`
 at runtime — all schemas are in `references/object-types.md`.
+
+---
+
+## Reporting Rule (all operations)
+
+After every operation — success or failure — report to the user in **one or two
+lines, facts only**. No explanations, no suggestions unless the user asked.
+
+| Operation | Success format | Failure format |
+|---|---|---|
+| Create | `Created: {NAME}` | `Failed: {shortText}` |
+| Edit | `Edited: {file}` | — |
+| Activate | `Activated: {NAME}` | `Error ({attempt}/3): {shortText}` |
+| Unit tests | `Tests: {N} passed, {N} failed` | `No tests found` |
+| Transport | `TR: {number} — {description}` | `No open TRs found` |
+| RAP generate | `Generated: {N} objects` | `Validation error: {message}` |
+| ATC | `ATC: {N} findings` | `ATC unavailable` |
+
+On activate failure with auto-fix loop: report each attempt inline:
+```
+Error (1/3): Syntax error at line 42 — fixing...
+Error (2/3): Method not found — fixing...
+Activated: ZCL_MY_CLASS
+```
