@@ -79,5 +79,32 @@ Next: open in VS Code, edit source, then activate.
 ## Combine with Activate
 
 If the user asked to "create and activate" in one step:
-1. Complete all 3 steps above
-2. Then follow `references/ops/activate.md` using the `filePath` from Step 2
+1. Complete Steps 1–3 above
+2. Open the file in VS Code, write source code, save
+3. Run the **Activate loop** below using the `filePath` from Step 2
+
+---
+
+## Activate loop after creation (max 3 attempts)
+
+After source code has been written to the file, repeat up to **3 times**:
+
+### A — Call `abap_activate_objects`
+
+```
+destination: {destination from config}
+uris:        ["{filePath from Step 2}"]
+```
+
+### B — On success (`"success": true, "objectDiagnostics": []`)
+
+Report: "Activated successfully." Stop the loop.
+
+### C — On failure (`"success": false`)
+
+1. Show the full `objectDiagnostics` array (severity, shortText, longText)
+2. Fix the source code in the cache file using the `Edit` tool
+3. Increment attempt counter and repeat from A
+
+**After 3 failed attempts:** stop, report all remaining diagnostics, ask the
+user to review manually in VS Code.

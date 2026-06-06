@@ -1,20 +1,20 @@
 ---
 name: abap-vs-writer
 description: >
-  Use this skill whenever the user wants to create, activate, run unit tests on,
+  Use this skill whenever the user wants to create, edit, activate, run unit tests on,
   manage transports for, or generate RAP services for ABAP objects via the ADT MCP
   server. Trigger on: "create class", "create interface", "create CDS", "create BDEF",
-  "create service", "activate", "run tests", "unit tests", "transport", "TR",
-  "RAP generator", "OData service", "ATC check", "code check", or equivalent in any
-  language. Also trigger when the user provides an object name and asks to create,
-  activate, or test it.
+  "create service", "edit", "write code", "implement method", "add method", "activate",
+  "run tests", "unit tests", "transport", "TR", "RAP generator", "OData service",
+  "ATC check", "code check", or equivalent in any language. Also trigger when the user
+  provides an object name and asks to create, edit, activate, or test it.
 ---
 
 # abap-vs-writer — Core Skill
 
 Executes write-side ABAP ADT operations via the MCP server: creating objects,
-activating them, running unit tests, managing transport requests, and generating
-full RAP services.
+editing source code, activating, running unit tests, managing transport requests,
+and generating full RAP services.
 
 All object schemas and URI patterns are pre-loaded in reference files — no runtime
 discovery calls needed.
@@ -42,6 +42,7 @@ Load only the reference files that match the current task. Do not load all files
 | Signal in user request | Reference files to load |
 |------------------------|------------------------|
 | create / новый / class / interface / CDS / BDEF / service binding / service definition | `references/ops/create-object.md` + `references/object-types.md` |
+| edit / редактировать / implement / write code / add method / изменить / написать | `references/ops/edit-object.md` |
 | activate / активировать / активация | `references/ops/activate.md` + `references/uri-patterns.md` |
 | unit test / run tests / тесты / запустить тесты | `references/ops/run-unit-tests.md` + `references/uri-patterns.md` |
 | transport / TR / транспорт / задание переноса | `references/ops/transport.md` |

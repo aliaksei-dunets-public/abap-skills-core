@@ -1,7 +1,9 @@
 # Operation: Activate ABAP Objects
 
 Activates one or more ABAP objects. All files must be saved in VS Code before
-activating.
+activating. When activating a single object after editing, use the **loop** below
+(max 3 attempts with auto-fix). For bulk activation of already-correct objects,
+use the single-call flow.
 
 ---
 
@@ -13,7 +15,7 @@ URI source priority:
 
 ---
 
-## Call
+## Single-call flow (bulk / already-correct objects)
 
 `abap_activate_objects`:
 
@@ -24,24 +26,45 @@ uris: ["{uri1}", "{uri2}", ...]
 - Maximum **15 URIs** per call
 - For more than 15 objects: split into multiple calls
 
+**Success:** `{"success": true, "objectDiagnostics": []}` — report "Activated successfully."
+
+**Failure:** report the full `objectDiagnostics` array and switch to the loop below.
+
 ---
 
-## Response Handling
+## Activate loop (single object, max 3 attempts)
 
-**Success:**
-```json
-{"success": true, "objectDiagnostics": []}
-```
-Report: "Activated successfully."
+Use this when activating after an edit or create+write operation.
 
-**Failure:**
-```json
-{"success": false, "objectDiagnostics": [{"severity": "E", "shortText": "..."}]}
+Repeat up to **3 times**:
+
+### A — Call `abap_activate_objects`
+
 ```
-Report the full `objectDiagnostics` array. Common causes:
-- Syntax error in the source — user must fix in VS Code and retry
-- Unsaved changes — user must save the file in VS Code first
-- Dependency not activated — activate the dependency first
+destination: {destination from config}
+uris:        ["{uri}"]
+```
+
+### B — On success (`"success": true, "objectDiagnostics": []`)
+
+Report: "Activated successfully." Stop the loop.
+
+### C — On failure (`"success": false`)
+
+1. Show the full `objectDiagnostics` array (severity, shortText, longText)
+2. Fix the source in the cache file using the `Edit` tool
+3. Increment attempt counter and repeat from A
+
+**Common causes and fixes:**
+
+| Cause | Fix |
+|---|---|
+| Syntax error (missing period, keyword typo) | Fix in `.aclass` / `.acinc` |
+| Type/method not found | Add missing definition or fix spelling |
+| Dependency not activated | Activate dependency first, then retry |
+
+**After 3 failed attempts:** stop, report all remaining diagnostics, ask the
+user to review manually in VS Code.
 
 ---
 
