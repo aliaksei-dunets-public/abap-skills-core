@@ -60,6 +60,15 @@ Follow the instructions in the loaded reference file(s). Use `destination` from
 Phase 0 in every MCP tool call. Do not call `abap_creation-get_object_type_details`
 at runtime — all schemas are in `references/object-types.md`.
 
+### MCP invocation fallback
+
+First, attempt MCP tool calls natively (e.g. `mcp__<server>__<tool>`).
+If the call fails with `No such tool available`, the server key likely contains
+characters (`.`, `/`) that Claude Code cannot resolve to a tool prefix.
+In that case, check `configs/config.md` for a `MCP Invocation` section with
+project-specific curl instructions, and use those instead.
+If no curl instructions exist, ask the user how the ADT MCP server is registered.
+
 ---
 
 ## Reporting Rule (all operations)
