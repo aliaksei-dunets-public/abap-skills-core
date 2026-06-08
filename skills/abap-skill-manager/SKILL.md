@@ -190,6 +190,7 @@ by the user). Only create missing config stubs and `project-config.md`.
 |---|---|---|---|
 | abap-code-review | ✓ | ✓ | skipped (already present) |
 | abap-vs-reader | created | created | ✓ |
+| abap-vs-writer | created | created | ✓ |
 
 Then: "Fill in `$SKILLS_PATH/project-config.md` and each `configs/config.md`.
 Run `abap-skill-manager validate` to check for missing required fields."
@@ -335,6 +336,7 @@ Report the current state of the skills installation at a glance.
    | abap-skill-manager    | ✓       | —      | —     | no config required            |
    | abap-unit-test-creator| ✓       | ✓      | 0     |                               |
    | abap-vs-reader        | ✓       | ✓      | 0     |                               |
+   | abap-vs-writer        | ✓       | ✓      | 0     |                               |
 
    project-config.md: ✓  (TODOs: 0)
    ```
@@ -349,6 +351,7 @@ Report the current state of the skills installation at a glance.
    |-----------------------|----------|--------|-------|-------------------------------|
    | abap-code-review      | ✓        | ✓      | 0     |                               |
    | abap-vs-reader        | ✓        | ✓      | 0     |                               |
+   | abap-vs-writer        | ✓        | ✓      | 0     |                               |
 
    project-config.md: ✓  (TODOs: 0)
    ```
@@ -400,6 +403,9 @@ for every skill.
    ✓ system_id
    ✓ cache_base
    ✓ repotree_package_path
+
+   ### abap-vs-writer/configs/
+   ✓ destination
 
    ---
    Summary: 2 validation error(s).
@@ -592,6 +598,82 @@ replace with `skills/abap-vs-reader/scripts`).
 |---|---|---|
 | Claude Code | `.claude/skills-core` | `.claude/skills` |
 | GitHub Copilot Chat | `.agents/skills-core` | `.agents/skills` |
+
+---
+
+## Skill Registry — Maintenance
+
+This section is for the agent working in `abap-skills-core`. Follow it whenever
+a skill is created or a skill's config contract changes.
+
+---
+
+### When a new skill is added to `abap-skills-core`
+
+A new skill exists when a new subdirectory appears under `skills/` containing a
+`SKILL.md`. Update this file (`skills/abap-skill-manager/SKILL.md`) in the
+following four places:
+
+1. **`init` summary table** (under "`init` — Summary table (both modes)")
+   Add one row:
+   ```
+   | <skill-name> | created | created | ✓ |
+   ```
+   If the skill has no `CONFIG_TEMPLATE.md`, use `—` in the Config column and
+   note "no config required".
+
+2. **`status` submodule mode example table**
+   Add one row (alphabetical order):
+   ```
+   | <skill-name>          | ✓       | ✓      | 0     |                               |
+   ```
+   If the skill has no config, use `—` in the Config and TODOs columns and set
+   Notes to "no config required".
+
+3. **`status` manual mode example table**
+   Add the same row to the manual-mode table.
+
+4. **`validate` example report**
+   Add a section for the skill's required fields (from its `CONFIG_TEMPLATE.md`,
+   under `## Required in configs/...`):
+   ```
+   ### <skill-name>/configs/
+   ✓ <required_field_1>
+   ✓ <required_field_2>
+   ```
+   If the skill has no `CONFIG_TEMPLATE.md`, omit this section entirely.
+
+---
+
+### When an existing skill's config contract changes
+
+A config contract changes when `CONFIG_TEMPLATE.md` gains, loses, or renames a
+field under `## Required in configs/...` or `## Required in project-config.md`.
+
+1. **Field added** — append the new field to the relevant `### <skill>/configs/`
+   block in the `validate` example report. If the field goes into
+   `project-config.md`, add it under `### project-config.md`.
+
+2. **Field removed** — delete the corresponding line from the validate example.
+
+3. **Field renamed** — update the field name in the validate example.
+
+4. **`project-config.md` template changes** — if the skill requires a new entry
+   in the shared `project-config.md` template (the block under
+   "project-config.md standard template"), add the new line there too.
+
+After any of the above, re-read the updated `CONFIG_TEMPLATE.md` and verify the
+validate example is accurate before saving.
+
+---
+
+### Checklist (apply for every skill change)
+
+- [ ] `init` summary table updated
+- [ ] `status` submodule table updated
+- [ ] `status` manual table updated
+- [ ] `validate` example report updated
+- [ ] `project-config.md` template updated (only if the skill adds a shared field)
 
 ---
 
