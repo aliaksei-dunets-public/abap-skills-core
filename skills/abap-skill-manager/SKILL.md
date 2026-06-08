@@ -332,7 +332,6 @@ Report the current state of the skills installation at a glance.
    | Skill                 | Wrapper | Config | TODOs | Notes                         |
    |-----------------------|---------|--------|-------|-------------------------------|
    | abap-code-review      | ✓       | ✓      | 0     |                               |
-   | abap-run-unit-tests   | ✓       | ✓      | 2     | configs/config.md has 2 TODOs |
    | abap-skill-manager    | ✓       | —      | —     | no config required            |
    | abap-unit-test-creator| ✓       | ✓      | 0     |                               |
    | abap-vs-reader        | ✓       | ✓      | 0     |                               |

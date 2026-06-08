@@ -9,7 +9,6 @@ Used as a git submodule in ABAP project repositories.
 - `abap-code-review` — ABAP code review (PERF, CLEAN, RAP, CDS, TEST, DOC)
 - `abap-vs-reader` — Fetch ABAP artifact source from ADT VSCode extension cache
 - `abap-unit-test-creator` — Generate isolated ABAP Unit tests
-- `abap-run-unit-tests` — Run ABAP Unit Tests via ADT MCP server
 - `abap-skill-manager` — Manage skill lifecycle (init, update, status, validate, push, instruction)
 
 ## Setup Instructions
@@ -65,10 +64,6 @@ Create a `skills/` folder next to `skills-core/` and add one subfolder per skill
       configs/
         config.md
     abap-unit-test-creator/
-      SKILL.md
-      configs/
-        config.md
-    abap-run-unit-tests/
       SKILL.md
       configs/
         config.md

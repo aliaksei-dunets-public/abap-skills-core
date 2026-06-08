@@ -116,11 +116,6 @@ Replace the `source_retrieval_tool` config field reference with:
 
 Remove `source_retrieval_tool` from `CONFIG_TEMPLATE.md` for this skill.
 
-### abap-run-unit-tests
-
-Currently a placeholder. When implemented, use the same pattern from the start.  
-No changes needed now.
-
 ### abap-vs-reader
 
 No changes. It remains the underlying implementation for the `abap-vs-reader`
@@ -180,7 +175,6 @@ abap-skills-core/
 ```
 skills/abap-code-review/references/source-reader.md
 skills/abap-unit-test-creator/references/source-reader.md
-skills/abap-run-unit-tests/references/source-reader.md   ← when implemented
 ```
 
 Skills reference it as `references/source-reader.md` (local, always resolvable
@@ -206,5 +200,4 @@ inside every skill that is expected to use it (`abap-code-review`,
 ## Out of Scope
 
 - Adding a read-source tool to the ABAP MCP server (separate concern).
-- Implementing `abap-run-unit-tests` (placeholder, separate effort).
 - Changes to `abap-vs-reader` internals.
