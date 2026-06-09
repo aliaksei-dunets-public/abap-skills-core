@@ -116,13 +116,17 @@ in the core that is not yet present in the project.
    **a.** If `$SKILLS_PATH/<skill-name>/SKILL.md` already exists → skip,
    mark as "already present".
 
-   **b.** If wrapper is missing, create `$SKILLS_PATH/<skill-name>/SKILL.md`:
+   **b.** If wrapper is missing:
+
+   - Read the frontmatter of `$CORE_PATH/skills/<skill-name>/SKILL.md` and
+     extract the `name` and `description` fields.
+   - Create `$SKILLS_PATH/<skill-name>/SKILL.md` using those values:
 
    ```markdown
    ---
-   name: <skill-name>
+   name: <name from core SKILL.md>
    description: >
-     TODO — fill in trigger description for <skill-name>
+     <description from core SKILL.md>
    ---
 
    Read `$SKILLS_PATH/project-config.md` for project-wide context.
@@ -132,6 +136,9 @@ in the core that is not yet present in the project.
 
    Apply core instructions using the project context and all loaded config files.
    ```
+
+   If the core skill's `name` or `description` cannot be read, fall back to:
+   `name: <skill-name>` and `description: TODO — fill in trigger description for <skill-name>`.
 
    **c.** If the core skill has a `CONFIG_TEMPLATE.md` AND
    `$SKILLS_PATH/<skill-name>/configs/config.md` does not yet exist, create it:
@@ -367,6 +374,12 @@ for every skill.
 1. Read `$SKILLS_PATH/project-config.md`. Flag any field whose value is `TODO`
    or is absent.
 
+   Also verify wrapper descriptions (submodule mode only): for each skill,
+   read the `description` field from `$SKILLS_PATH/<skill-name>/SKILL.md`.
+   If it still contains `TODO`, report as WARNING — "description in wrapper
+   `<skill-name>/SKILL.md` was not copied from core. Run `abap-skill-manager init`
+   to regenerate or fill it in manually."
+
    Also check the `source_reader` field under `## Source Reader`:
    - If absent: report as WARNING — "source_reader not set; defaulting to auto. To suppress this warning, the project owner should add `source_reader: auto` under `## Source Reader` in project-config.md."
    - If present but not one of `auto`, `abap-vs-reader`, `mcp`, `ask`: report as ERROR — "source_reader has unknown value '<value>'. Allowed: auto | abap-vs-reader | mcp | ask."
@@ -383,7 +396,34 @@ for every skill.
    linked files. A field passes if it is present and its value does not
    contain `TODO`.
 
-4. Output a validation report:
+4. **Run skill self-tests** — for each skill folder in the core (submodule
+   mode) or in `$SKILLS_PATH/` (manual mode), check whether
+   `<skill>/scripts/tests/Invoke-Tests.ps1` exists. If it does, execute it:
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass `
+     -File "<skill_root>/scripts/tests/Invoke-Tests.ps1"
+   ```
+
+   Where `<skill_root>` is `$CORE_PATH/skills/<skill>` (submodule mode) or
+   `$SKILLS_PATH/<skill>` (manual mode).
+
+   Capture exit code:
+
+   | Exit code | Reporting |
+   |---|---|
+   | `0` | Tests passed — record as `✓ tests passed (N)` where N is the count from the runner's summary line |
+   | `1` | Tests failed — record as `✗ tests failed` and surface the failure messages from runner output |
+   | `2` | Runner error — record as `⚠ test runner error` with the runner's stderr |
+
+   If the script directory exists but `tests/` is absent, record as
+   `— no tests` and do not flag it as an error (tests are encouraged but
+   not mandatory for every skill).
+
+   Skills without a `scripts/` directory are skipped silently — the test
+   row is omitted from the report.
+
+5. Output a validation report:
 
    ```
    ## Validation Report
@@ -406,12 +446,23 @@ for every skill.
    ### abap-vs-writer/configs/
    ✓ destination
 
+   ### Skill self-tests
+   ✓ abap-vs-reader: tests passed (9)
+   — abap-code-review: no tests
+   — abap-unit-test-creator: no tests
+   — abap-vs-writer: no tests
+
    ---
-   Summary: 2 validation error(s).
+   Summary: 2 validation error(s), 0 test failure(s).
    Fix the flagged fields, then run `abap-skill-manager validate` again.
    ```
 
-   If all checks pass: "✅ All required fields are filled in. Ready to use."
+   If all checks **and** all skill self-tests pass: "✅ All required fields
+   are filled in and all skill self-tests pass. Ready to use."
+
+   If config is OK but tests fail, the manager must report a non-zero overall
+   result and surface the failing test names so the user can investigate
+   before relying on the skill.
 
 ---
 
@@ -476,6 +527,9 @@ abap-skills-core/          ← git submodule, shared across all projects
       CONFIG_TEMPLATE.md   ← documents required/recommended config fields
       references/          ← supporting reference files
       scripts/             ← helper scripts (e.g. open-abap.ps1)
+        tests/             ← optional self-tests for helper scripts
+          Invoke-Tests.ps1 ← dependency-free runner (PS 5.1+ / PS 7+)
+          *.Tests.ps1      ← test cases — executed by `validate`
 
 .claude/skills/            ← project layer, committed to the project repo
   project-config.md        ← shared context: namespace, naming, system ID
