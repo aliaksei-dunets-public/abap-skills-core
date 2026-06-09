@@ -197,7 +197,6 @@ by the user). Only create missing config stubs and `project-config.md`.
 |---|---|---|---|
 | abap-code-review | ✓ | ✓ | skipped (already present) |
 | abap-vs-reader | created | created | ✓ |
-| abap-vs-writer | created | created | ✓ |
 
 Then: "Fill in `$SKILLS_PATH/project-config.md` and each `configs/config.md`.
 Run `abap-skill-manager validate` to check for missing required fields."
@@ -342,7 +341,6 @@ Report the current state of the skills installation at a glance.
    | abap-skill-manager    | ✓       | —      | —     | no config required            |
    | abap-unit-test-creator| ✓       | ✓      | 0     |                               |
    | abap-vs-reader        | ✓       | ✓      | 0     |                               |
-   | abap-vs-writer        | ✓       | ✓      | 0     |                               |
 
    project-config.md: ✓  (TODOs: 0)
    ```
@@ -357,7 +355,6 @@ Report the current state of the skills installation at a glance.
    |-----------------------|----------|--------|-------|-------------------------------|
    | abap-code-review      | ✓        | ✓      | 0     |                               |
    | abap-vs-reader        | ✓        | ✓      | 0     |                               |
-   | abap-vs-writer        | ✓        | ✓      | 0     |                               |
 
    project-config.md: ✓  (TODOs: 0)
    ```
@@ -443,14 +440,10 @@ for every skill.
    ✓ cache_base
    ✓ repotree_package_path
 
-   ### abap-vs-writer/configs/
-   ✓ destination
-
    ### Skill self-tests
    ✓ abap-vs-reader: tests passed (9)
    — abap-code-review: no tests
    — abap-unit-test-creator: no tests
-   — abap-vs-writer: no tests
 
    ---
    Summary: 2 validation error(s), 0 test failure(s).
