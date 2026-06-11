@@ -63,6 +63,12 @@ function Invoke-Script {
     }
     $argString = ($ScriptArgs -join ' ')
     $wrapperLines += "try { & '$scriptUnderTest' $argString } catch { Write-Output ('CAUGHT: ' + `$_.Exception.Message) }"
+    if ($StubAutomation) {
+        # Surface the stub log on stdout so tests can assert on the keystrokes
+        # the script tried to send. Each entry is emitted on its own line and
+        # prefixed exactly as the stub recorded it (e.g. "SendKeys:^+A").
+        $wrapperLines += 'foreach ($entry in $global:__StubLog) { Write-Output $entry }'
+    }
 
     $tmp = [System.IO.Path]::GetTempFileName() + '.ps1'
     Set-Content -LiteralPath $tmp -Value ($wrapperLines -join "`r`n") -Encoding ASCII
@@ -164,4 +170,25 @@ Test 'success log line includes the object name verbatim' {
     $r = Invoke-Script -ScriptArgs @("-ObjectName `"$name`"") -StubAutomation
     Assert-Match ([regex]::Escape($name)) $r.Output `
         'success log must include the requested object name'
+}
+
+Test 'output warns about integrated-terminal focus issue' {
+    # SKILL.md "Known issues" relies on this warning being printed so the
+    # caller (or the user reading stdout) understands why nothing happened
+    # when the script was invoked from a VS Code integrated terminal.
+    $r = Invoke-Script -ScriptArgs @('-ObjectName "/NS/CL_FOO"') -StubAutomation
+    Assert-Match 'integrated terminal' $r.Output `
+        'expected warning about VS Code integrated-terminal focus issue'
+}
+
+Test 'sends Escape keystrokes before the open-object chord' {
+    # The Escape pre-keystrokes dismiss transient overlays (terminal
+    # completion popups, hover cards) that would otherwise eat Ctrl+Shift+A.
+    # If this contract changes, SKILL.md "Known issues" needs to be updated
+    # in lockstep.
+    $r = Invoke-Script -ScriptArgs @('-ObjectName "/NS/CL_FOO"') -StubAutomation
+    Assert-Match 'SendKeys:\{ESC\}' $r.Output `
+        'expected Escape keystroke to be sent at least once before the chord'
+    Assert-Match 'SendKeys:\^\+A' $r.Output `
+        'expected Ctrl+Shift+A chord to be sent after Escape'
 }

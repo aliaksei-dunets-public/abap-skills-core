@@ -42,6 +42,57 @@ repotree_package_path: System%20Library/(DEMO)PKG/Source%20Library/(DEMO)PKG
 
 ---
 
+## Required in `configs/system.md` for the Phase 0.5 fast path
+
+These fields enable the **virtual `abap:` URI** route (Phase 0.5 of the skill).
+Without them the agent falls back to the slower physical-cache path.
+
+| Field | Format | Description |
+|---|---|---|
+| `virtual_root_segment` | Display segment | Top-level segment under `repotree-v1/<system_id>/`. Almost always `System Library` (use `Local Objects ($TMP)` for `$TMP` development). Pass **literal** spaces and parentheses — do not pre-encode. |
+| `virtual_top_package` | `(NS)PKG` | Display name of the top package, e.g. `(DEMO)PP`. Combined with `virtual_root_segment` to form the URI prefix. |
+| `virtual_default_subpackage_chain` | `(NS)A/(NS)B` | Optional. Default sub-package chain inserted between the top package and the type-label folder when the user provides a bare object name. Leave empty if all relevant objects sit directly under `virtual_top_package`. |
+| `virtual_known_subpackages` | YAML map | Optional. Map of object-name patterns → sub-package chain. Lets the skill jump directly to the right URI for well-known projects without enumerating the package tree. |
+
+Example:
+
+```markdown
+# Phase 0.5 fast-path config
+
+virtual_root_segment: System Library
+virtual_top_package: (DEMO)PP
+virtual_default_subpackage_chain: 
+virtual_known_subpackages:
+  '(DEMO)CL_UPLOAD_*': (DEMO)COCKPITS/(DEMO)UPLOAD_FILE
+  '(DEMO)I_PRICING_*': (DEMO)PRICING
+```
+
+> **Reading rule.** The agent must pass these segments to `read_file` *literally*
+> (with spaces and parentheses), not URL-encoded. The `read_file` tool URL-encodes
+> them internally when it forwards the request to the ADT virtual filesystem
+> provider. Pre-encoding produces ENOENT.
+
+---
+
+## Object-type label mapping for the virtual URI
+
+The skill's Step 2.3.5 documents the canonical type-label segments to use in
+virtual URIs. Projects that introduce custom or extension object types should
+add overrides here:
+
+| Field | Format | Description |
+|---|---|---|
+| `virtual_type_label_overrides` | YAML map | Optional. Object-type → URI segment overrides for non-standard or extension types not covered by Step 2.3.5. |
+
+Example:
+
+```markdown
+virtual_type_label_overrides:
+  Z_CUSTOM_TYPE: Source Code Library/Custom Objects
+```
+
+---
+
 ## Recommended in `configs/system.md`
 
 | Field | Format | Description |

@@ -27,18 +27,96 @@ system.
 
 | Surface | Path shape | Use it for | Tools that work |
 |---|---|---|---|
-| **Virtual workspace** (live, in-memory) | `abap:/repotree-v1/<system_id>/...` with display names like `(NS)CL_FOO` | Editing the object live in the editor; clicking jump-to-definition | `read_file` (when the user already has the file open) |
-| **Physical semantic cache** (on-disk) | `<cache_base>/.adt/<subdir>/<encoded_name>/<file>.<ext>` | Bulk reading, grep/search across many objects, reading without opening | `read_file`, `grep_search`, `Get-ChildItem`, `Select-String` |
+| **Virtual workspace** (live, pull-through) | `abap:/repotree-v1/<system_id>/...` with display names like `(NS)CL_FOO` | Reading any single object **by exact name and known sub-package**, even if it has never been opened in the editor | `read_file` on the `abap:` URI directly |
+| **Physical semantic cache** (on-disk) | `<cache_base>/.adt/<subdir>/<encoded_name>/<file>.<ext>` | Bulk reading already-cached objects, grep/search across many objects, fuzzy / partial-name lookups, listing what is locally available | `read_file`, `grep_search`, `Get-ChildItem`, `Select-String` |
+
+### Decision order
+
+1. **Try the virtual-URI fast path first** when you have (or can derive) a fully
+   qualified ADT path: `abap:/repotree-v1/<system>/<package>/.../<TYPE_LABEL>/<DISPLAY_NAME>/<filename>`.
+   The ADT VS Code virtual filesystem provider implements **pull-through fetch
+   on read**: a single `read_file` call returns the source even when the object
+   has never been opened in the editor and is not yet in the physical cache.
+   See **Phase 0.5** for the full URI construction recipe.
+2. **Fall back to the physical cache** (Phase 1+) when:
+   - The virtual URI is unknown or the read returned ENOENT (typical when the
+     sub-package containment is wrong or when the object label cannot be derived).
+   - You need to grep / list across many objects.
+   - You need fuzzy / partial-name resolution (the cache uses encoded names that
+     `file_search` cannot match — see Step 2.5b).
+3. **Last resort: ask the user** to open the object in the editor manually
+   (single click on the ADT tree node) when both routes fail. Do **not** rely on
+   the keystroke-driven `open-abap.ps1` as a substitute — see Phase 3
+   "Known issues".
 
 ### Rules of thumb
 
 1. **Never `file_search` for ABAP source by user-friendly name** (`bp_r_foo.clas.implementations.abap`). The physical cache uses **encoded URL paths** (`%2fns%2fbp_r_foo`) and **non-standard extensions** (`.aclass`, `.acinc`, `.asbdef`, `.asddls` …). Vanilla glob patterns will not find them.
-2. **Always resolve to the physical cache** when:
-   - You need to read source code body to inspect logic
-   - You need to grep across multiple unrelated objects
-   - The object is not currently open in any editor tab
-3. **The virtual `repotree-v1` path describes only logical placement** (package / sub-package). It does **not** influence the physical cache path. In the cache, the only locators are: `system_id`, `object_type` subdirectory, and `encoded_object_name`. Two objects with the same name in different sub-packages share the same physical path.
-4. **For partial / fuzzy lookups** (user mentions an approximate name), `Get-ChildItem -Filter "*partial*" -Directory` against the appropriate `<cache_base>/.adt/<subdir>/` is the **only** reliable approach. See Step 2.5b.
+2. **The virtual `repotree-v1` path mirrors package / sub-package containment** — to read via the `abap:` URI you must reproduce that containment. The **physical** cache, by contrast, is flat: it cares only about `system_id`, `object_type` subdirectory, and `encoded_object_name`.
+3. **For partial / fuzzy lookups** (user mentions an approximate name), `Get-ChildItem -Filter "*partial*" -Directory` against the appropriate `<cache_base>/.adt/<subdir>/` is the **only** reliable approach. See Step 2.5b.
+
+---
+
+## Phase 0.5 — Fast path: virtual workspace URI
+
+This is the **preferred route** when the user has given (or you can derive) a
+full ADT path or knows the object's package containment. A single `read_file`
+on the `abap:` URI is cheaper than the cache-validate / auto-open / re-check
+loop in Phase 2, and works for objects that have **never been opened** in the
+editor.
+
+### Step 0.5.1 — Construct the URI
+
+Template:
+
+```
+abap:/repotree-v1/<SYSTEM_ID>/<ROOT_SEGMENT>/<TOP_PACKAGE>/<SUB_PACKAGE_CHAIN>/<TYPE_LABEL>/<DISPLAY_NAME>/<filename>
+```
+
+| Placeholder | How to fill it |
+|---|---|
+| `<SYSTEM_ID>` | From `configs/system.md` → `system_id`. |
+| `<ROOT_SEGMENT>` | Usually `System Library`. Other valid values: `Local Objects ($TMP)`. |
+| `<TOP_PACKAGE>` | Display-format package name, e.g. `(HEC4)PP`. |
+| `<SUB_PACKAGE_CHAIN>` | Zero or more nested package segments mirroring the Project Explorer tree, e.g. `(HEC4)COCKPITS/(HEC4)UPLOAD_FILE`. **Critical**: omitting required sub-packages causes ENOENT. See Step 2.6.5 below. |
+| `<TYPE_LABEL>` | The user-visible folder under the package, e.g. `Source Code Library/Classes`. Full mapping in Step 2.3.5. |
+| `<DISPLAY_NAME>` | Uppercase display form: `(NS)CL_FOO`. |
+| `<filename>` | Lowercase display form + extension: `(hec4)cl_foo.clas.abap`. Full mapping in Step 2.3.5. |
+
+> **Encoding rule for `read_file`:** spaces and parentheses inside path
+> components are passed **literally** (`System Library/(HEC4)PP`, not
+> `System%20Library/%28HEC4%29PP`). The `read_file` tool URL-encodes them
+> internally. Do **not** pre-encode.
+
+### Step 0.5.2 — Read with `read_file`
+
+Call `read_file` with the constructed URI. If the object exists, the extension
+will fetch it on demand and `read_file` returns the full source.
+
+**Success signal:** `read_file` returns text content starting with an ABAP
+keyword (`CLASS`, `INTERFACE`, `MANAGED`, `UNMANAGED`, `DEFINE`, `REPORT`,
+`@…` annotations for CDS, etc.).
+
+**Failure signals — when to fall back:**
+
+| Symptom | Meaning | Next action |
+|---|---|---|
+| `Unable to resolve nonexistent file` / ENOENT | Sub-package chain is wrong, or object/type label mismatch | Verify sub-package via Step 2.6.5; if still failing, fall back to Phase 1 |
+| Empty content | Cache eviction race during background sync | Retry once after 2 s; if still empty, fall back to Phase 1 |
+| HTTP / network error from extension | ADT extension not connected to the system | Tell the user to reconnect; do not fall back (cache is also stale) |
+
+### Step 0.5.3 — Decide based on outcome
+
+- **Read succeeded** → present the content per Step 2.8 and stop.
+- **Read failed with ENOENT and you know the object exists in the system** →
+  proceed to Phase 1 (physical-cache route).
+- **Both routes fail** → ask the user to open the object once in the editor
+  (single click on its node in the ADT Project Explorer), then retry the
+  virtual-URI read.
+
+> **Do not chain auto-open via `open-abap.ps1` here.** From a VS Code
+> integrated terminal, the keystroke automation has known focus issues — see
+> Phase 3 "Known issues". If a manual open is required, ask the user.
 
 ---
 
@@ -170,6 +248,46 @@ real source in the same object directory:
 If the type label is not in this table, fall back to scanning `<cache_base>/.adt/`
 recursively for a directory whose encoded name matches the object (see Step 2.5b),
 and warn the user that the type was inferred.
+
+### Step 2.3.5 — Type-label and filename for the virtual URI (Phase 0.5)
+
+When constructing the **virtual `abap:` URI** (Phase 0.5), use the user-visible
+type-label segment from the ADT Project Explorer, **not** the physical-cache
+subdirectory from Step 2.3. The on-disk subdir and the visible folder name are
+intentionally different. Use this table:
+
+| Object type | URI type-label segment | URI filename suffix | Filename casing rule |
+|---|---|---|---|
+| Class | `Source Code Library/Classes` | `.clas.abap` | `<lower_display_name>.clas.abap` |
+| Interface | `Source Code Library/Interfaces` | `.intf.abap` | `<lower_display_name>.intf.abap` |
+| Behavior Definition (BDEF) | `Source Code Library/Behavior Definitions` | `.bdef.abap` | `<lower_display_name>.bdef.abap` |
+| CDS Data Definition | `Source Code Library/Data Definitions` | `.ddls.asddls` | `<lower_display_name>.ddls.asddls` |
+| Metadata Extension | `Source Code Library/Metadata Extensions` | `.ddlx.asddlxex` | `<lower_display_name>.ddlx.asddlxex` |
+| Service Definition | `Source Code Library/Service Definitions` | `.srvd.asrvds` | `<lower_display_name>.srvd.asrvds` |
+| Service Binding | `Source Code Library/Service Bindings` | `.srvb.srvbsvb` | XML metadata only — usually not useful to read |
+| Program | `Source Code Library/Programs` | `.prog.abap` | `<lower_display_name>.prog.abap` |
+| Include | `Source Code Library/Includes` | `.prog.abap` | `<lower_display_name>.prog.abap` (verify in Project Explorer per system) |
+| Function Group | `Source Code Library/Function Groups/<GROUP>` | `.fugr.abap` | container — read individual function modules |
+| Function Module | `Source Code Library/Function Groups/<GROUP>/Function Modules/<NAME>` | `.fugr.func.abap` | `<lower_name>.fugr.func.abap` |
+| Type Group | `Source Code Library/Type Groups` | `.prog.abap` | `<lower_name>.prog.abap` |
+| Message Class | `Source Code Library/Message Classes` | `.prog.msag` | `<lower_name>.prog.msag` |
+| Database Table | `Data Dictionary/Database Tables` | `.tabl.abap` or `.tabl.json` | `<lower_display_name>.tabl.abap` (verify in Project Explorer per system) |
+| Structure | `Data Dictionary/Structures` | `.stru.abap` | `<lower_display_name>.stru.abap` |
+| Data Element | `Data Dictionary/Data Elements` | `.dtel.abap` | `<lower_display_name>.dtel.abap` |
+| Domain | `Data Dictionary/Domains` | `.doma.abap` | `<lower_display_name>.doma.abap` |
+| Search Help | `Data Dictionary/Search Helps` | `.shlp.abap` | `<lower_display_name>.shlp.abap` |
+| Lock Object | `Data Dictionary/Lock Objects` | `.enqu.abap` | `<lower_display_name>.enqu.abap` |
+| Table Type | `Data Dictionary/Table Types` | `.ttyp.abap` | `<lower_display_name>.ttyp.abap` |
+
+**Casing rules (strict):**
+- `<DISPLAY_NAME>` segment in the URI: **uppercase** namespace + **uppercase** name, e.g. `(HEC4)CL_FOO`.
+- `<lower_display_name>` in the filename: **lowercase** namespace + **lowercase** name, e.g. `(hec4)cl_foo`.
+- Spaces and parentheses inside path segments: pass **literally** to `read_file` (do not pre-encode to `%20` / `%28` / `%29`).
+
+> **Per-system variations.** The exact suffix table can shift by SAP_BASIS
+> release and by the ADT extension version. When in doubt, expand a single
+> object node in the ADT Project Explorer and copy the visible filename — the
+> on-screen label is the canonical source of truth.
 
 ### Step 2.4 — Encode the object name
 
@@ -308,6 +426,54 @@ powershell.exe -ExecutionPolicy Bypass `
 > tab. Always run the auto-open loop **even if** the user reports that the object
 > was just activated — activation does not guarantee a cache entry.
 
+### Step 2.6.5 — Resolving the sub-package chain for the virtual URI
+
+This step is only relevant when you took the **Phase 0.5 fast path** (virtual
+`abap:` URI) and got an ENOENT. The most common cause is an incorrect
+`<SUB_PACKAGE_CHAIN>` segment — the URI must mirror the exact ADT Project
+Explorer containment, including all intermediate sub-packages.
+
+**Resolution order (cheapest → most expensive):**
+
+1. **Try the URI without any sub-package chain first.** Many top-level packages
+   contain objects directly (e.g. `(HEC4)PP/Source Code Library/Classes/...`).
+   If this fails with ENOENT, proceed to step 2.
+2. **Use the physical cache to confirm the object exists at all.** Build the
+   cache path (Phase 1+, Steps 2.3–2.5) and check `Test-Path`. If the cache
+   directory is missing too, the object likely does not exist under the assumed
+   name — run the fuzzy lookup (Step 2.5b) before continuing.
+3. **Search the workspace tree for the sub-package** (if `list_dir` is
+   available in the agent's toolset). The virtual workspace exposes the
+   package tree as folders. Use `list_dir` against the parent package URI to
+   enumerate sub-packages, then drill down:
+
+   ```
+   list_dir(path: "abap:/repotree-v1/<SYSTEM>/<ROOT>/<TOP_PACKAGE>")
+   list_dir(path: "abap:/repotree-v1/<SYSTEM>/<ROOT>/<TOP_PACKAGE>/<CANDIDATE_SUB>")
+   ```
+
+   When the matching `<TYPE_LABEL>` folder appears in the listing, you have
+   the right containment. Concatenate it into `<SUB_PACKAGE_CHAIN>` and retry
+   the `read_file`.
+4. **Fall back to grepping `package.devc.json` files** (when the object is in
+   the workspace root, not the virtual filesystem):
+
+   ```powershell
+   Get-ChildItem -Recurse -Filter '*.devc.json' |
+     Select-String -Pattern '"superPackage"\s*:\s*"\(HEC4\)PP"'
+   ```
+
+   This locates direct children of `(HEC4)PP`. Repeat with the next package
+   level until the object's package shows up.
+5. **Last resort: ask the user.** When the user has the object visible in their
+   ADT Project Explorer, asking *"What is the parent package of `<OBJECT>` as
+   shown in the ADT Project Explorer?"* is faster than exhaustive enumeration.
+
+> **Symbolic shortcut.** Some sub-packages are stable across the project's
+> lifetime — record them in repository memory (`/memories/repo/`) the first
+> time you resolve them. Example: `/HEC4/UPLOAD_FILE` lives under
+> `(HEC4)COCKPITS/(HEC4)UPLOAD_FILE` in the ATLAS P&P workspace.
+
 ### Step 2.7 — Select files to read
 
 **Class objects** (`classlib/classes`) — multi-file. The directory contains one
@@ -389,6 +555,22 @@ configured `repotree_package_path` with the URL-encoded display name.
 
 ## Phase 3 — Troubleshooting
 
+### Known issues (read first)
+
+These behaviours are **not bugs to fix on the fly** — they are confirmed
+limitations of the current ADT VS Code extension and Windows host. Apply the
+documented workaround instead of chasing the symptom.
+
+| Issue | Status | Workaround |
+|---|---|---|
+| `open-abap.ps1` does nothing when invoked from the **VS Code integrated terminal** | Confirmed: focus stays on the terminal pane, so `Ctrl+Shift+A` is consumed by the terminal instead of the editor command palette | Run the script from an **external** PowerShell window, or instruct the user to click into the editor area before triggering. As a more reliable alternative, **ask the user** to open the object manually (single click on its node in the ADT Project Explorer). The script is **not** safe to chain unattended from a tool call started inside an integrated terminal. |
+| `run_vscode_command abap.open.object` and `abap.openObject` return Failed | Confirmed: command IDs are not exposed by the ADT extension's contribution points | Do **not** call them. Use the keystroke automation (`open-abap.ps1`) only — and only from contexts where focus is in the editor (see row above). |
+| Physical cache file (`*.aclass`, `*.asddls` …) is **0 bytes** right after Open Object | Confirmed: ADT writes the metadata wrapper first, then asynchronously fetches the source on the next read | Trigger an actual read against the **virtual** `abap:` URI to populate the source body, then re-read from the cache if needed |
+| `read_file` against a virtual `abap:` URI succeeds even though the object was never opened in an editor | Intended behaviour: the virtual filesystem provider does pull-through fetch on read | Prefer the virtual-URI fast path (Phase 0.5) — it is faster than the auto-open + cache-validate loop |
+| `file_search` cannot find ABAP source files by user-friendly filename | Intended: cache uses URL-encoded names and non-standard extensions | Always use `Get-ChildItem -Filter` against the appropriate `<cache_base>/.adt/<subdir>/` (Step 2.5b) |
+
+### Symptom table
+
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `file_search` returns nothing for a known object | Searching by user-friendly name in the cache (which uses encoded names) | Use Step 2.5b `Get-ChildItem -Filter` instead |
@@ -401,6 +583,7 @@ configured `repotree_package_path` with the URL-encoded display name.
 | Class implementation file is huge and reads slow | Reading whole `.acinc` instead of using line ranges | Read `.aclass` first; then read only relevant method ranges from the include |
 | Behavior pool (`BP_R_…`) not found under `wbobj2/bo/bdef/` | BP is a global class, not a BDEF artefact | Look in `classlib/classes/` instead |
 | Service binding has no readable source | SRVB stores XML metadata only | Read the linked Service Definition (`.assrvds`) for the projection source |
+| Virtual-URI `read_file` returns ENOENT but the object exists | Sub-package chain in the URI is wrong | Run Step 2.6.5 to resolve the correct containment, then retry |
 
 ---
 
