@@ -45,6 +45,7 @@ if it exists and contains project-specific values.
 | `references/isolation.md` | `SELECT … FROM`, `INSERT`, `UPDATE`, `DELETE`, `CALL FUNCTION`, `AUTHORITY-CHECK`, `sy-datum`, `sy-uzeit`, `sy-uname`, `ENQUEUE_`, `NUMBER_GET_NEXT`, `DATA … TYPE REF TO IF_`, `INTERFACES IF_` | "mock", "fake", "isolate", "SQL", "BAPI", "RFC", "external" |
 | `references/environment.md` | *(no code signal — use context only)* | "Cloud", "BTP", "ABAP Cloud", "public edition"; or environment cannot be determined and project config is absent |
 | `references/coverage-checklist.md` | 2+ public methods with branching (`IF`, `CASE`, `LOOP`) | "what to test", "coverage plan", "edge cases", "extend coverage" |
+| `references/authoring-gotchas.md` | `RAISING` clause on the method under test, parameter typed against a data element whose DDIC domain has a fixed-value list, OR test method name approaching 30 chars | "fixed value", "raises", "exception", "method name too long" |
 
 ### Example Files — Signal Table
 
@@ -59,6 +60,7 @@ Load only the one example that matches. Do not load multiple examples speculativ
 | `references/examples/cds-test-environment.md` | `SELECT` from an entity whose name matches `_I_`, `_C_`, `_P_`, or `_R_` naming pattern |
 | `references/examples/rap-eml.md` | `rap-patterns.md` was loaded AND source contains EML statements |
 | `references/examples/extend-existing-ltc.md` | Source already contains a local test class (`CLASS ltc_` or `FOR TESTING`) |
+| `references/examples/friends-clause.md` | Method under test is `PRIVATE`/`PROTECTED` with no public seam, OR class is `CREATE PRIVATE` with a static singleton cache that must be reset between tests, OR task mentions "friends", "private method", "singleton reset" — may co-load with `cds-test-environment.md` when the singleton depends on CDS data |
 
 ---
 

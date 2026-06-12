@@ -79,7 +79,18 @@ For CDS dependencies:
   views;
 - create the environment in `class_setup` if available and allowed;
 - use exact CDS entities and dependency names from source or metadata;
-- insert data with correct row types;
+- insert data with the row type of the **doubled entity**, not the row type of
+  the CDS view passed to `i_for_entity` — by default
+  `cl_cds_test_environment=>create` doubles the immediate `select from` source
+  (a transparent table when the view selects directly from a DB table, or an
+  intermediate CDS view when the view selects from another CDS view) and any
+  association target views, NOT the view itself;
+- when a view filters via an association target field
+  (e.g. `where _Other.<field> = ...`), seed the **association target view**
+  (not its leaf table) — the framework registers the target as a doubled CDS
+  view;
+- do not list a view's own association targets in `create_for_multiple_cds` —
+  they are auto-doubled and the framework will reject the duplicate;
 - clear test data between tests;
 - destroy the environment in `class_teardown`;
 - never use productive data as test data.
