@@ -1,8 +1,7 @@
 # Example: Local Fake for Interface Dependency
 
-Use this example when the production unit depends on an interface and the expected behavior is simple enough to express with a local fake.
-
-Prefer existing project fakes/builders first. Use this pattern when no project helper exists and the interface name and method signatures are verified.
+Use when production depends on an interface and behavior is simple. Prefer
+existing project fakes/builders first.
 
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
@@ -24,7 +23,7 @@ CLASS ltd_<dependency_name> IMPLEMENTATION.
 ENDCLASS.
 ```
 
-Example usage inside a test:
+Use in test class:
 
 ```abap
 CLASS ltc_<unit_name> DEFINITION FINAL FOR TESTING
@@ -46,7 +45,7 @@ CLASS ltc_<unit_name> IMPLEMENTATION.
   ENDMETHOD.
 ```
 
-Assertion pattern:
+Verify interaction:
 
 ```abap
 cl_abap_unit_assert=>assert_equals(
@@ -55,8 +54,8 @@ cl_abap_unit_assert=>assert_equals(
   msg = 'Dependency should be called once for valid input' ).
 ```
 
-Usage rules:
-
-- Track calls only when interaction itself matters.
-- Do not overfit the fake to one test if a simpler return value is enough.
-- If the production code creates the dependency internally, report a testability blocker or recommend introducing a seam.
+Rules:
+- Track calls only when the interaction itself matters.
+- Do not overfit one fake to one test if a fixed return value is enough.
+- If production creates the dependency internally, report a blocker or
+  recommend introducing a seam.

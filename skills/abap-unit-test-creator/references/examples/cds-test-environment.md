@@ -1,8 +1,7 @@
 # Example: CDS Isolation with `cl_cds_test_environment`
 
-Use this example when production code reads from CDS entities/views and the target environment supports CDS test doubles.
-
-Use only verified CDS names, dependency names, and row types.
+Use when production reads CDS entities/views and the environment supports
+CDS test doubles. Use only verified CDS, dependency, and row-type names.
 
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
@@ -36,19 +35,14 @@ CLASS ltc_<unit_name> IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD <method_under_test>_<scenario>.
-    " Insert with the row type of each DOUBLED entity separately.
-    " If only one entity is in the doubled set, one DATA declaration is enough.
-    " If both a leaf table and an association target are doubled, declare one
-    " variable per entity — see "What gets doubled" and the worked example below.
+    " Insert with the row type of EACH doubled entity (one DATA per entity).
     DATA rows_<doubled_entity_1> TYPE STANDARD TABLE OF <doubled_entity_1>.
-    " DATA rows_<doubled_entity_2> TYPE STANDARD TABLE OF <doubled_entity_2>.  " add if needed
 
     rows_<doubled_entity_1> = VALUE #(
       ( <field_1> = <value_1>
         <field_2> = <value_2> ) ).
 
     cds_environment->insert_test_data( i_data = rows_<doubled_entity_1> ).
-    " cds_environment->insert_test_data( i_data = rows_<doubled_entity_2> ).  " add if needed
 
     DATA(result) = cut-><method_under_test>( <input> ).
 
@@ -62,38 +56,26 @@ ENDCLASS.
 
 ## What gets doubled (critical)
 
-`cl_cds_test_environment=>create( i_for_entity = '<view>' )` does **NOT** create
-a double for `<view>` itself. By default
-(`i_select_base_dependencies = abap_false`) it creates doubles for:
+`cl_cds_test_environment=>create( i_for_entity = '<view>' )` does **NOT**
+double `<view>` itself. By default (`i_select_base_dependencies = abap_false`)
+it doubles:
 
-1. The **immediate `select from` source** — if this is a transparent table, that table is doubled; if it is another CDS view (a stacked/composition view), that intermediate CDS view is doubled (not the leaf table at the bottom of the stack).
-2. The **association target CDS view(s)** referenced in the view's projection
-   (the framework treats those targets as doubled entities, even when the
-   association is only used implicitly via a `WHERE` filter on a target field).
+1. The **immediate `select from` source** — the transparent table if the view
+   selects directly from a DB table, or the intermediate CDS view if the view
+   selects from another view (not the leaf at the bottom of a stack).
+2. The **association target views** referenced in the projection — including
+   targets used only via a `WHERE` filter on a target field.
 
-**Insert test data using the row type of those doubled entities, not the row
-type of the view under test.**
+**Insert with the row type of those doubled entities, not the view under
+test.**
 
-### Non-default mode: `i_select_base_dependencies = abap_true`
+### `i_select_base_dependencies = abap_true`
 
-When production code passes `i_select_base_dependencies = abap_true` to
-`cl_cds_test_environment=>create`, the framework resolves and doubles the entire
-dependency tree (all CDS views and tables in the hierarchy), not just the
-immediate `select from` source. In this mode:
-
-- Determine the full dependency tree from the view's metadata.
-- Insert test data using the row type of each table/view that is actually read
-  by the production SELECT — the set is wider than in default mode.
-- The doubling scope change means any insert using a view's row type (rather
-  than its leaf table) may now be correct or incorrect depending on where in
-  the tree the framework placed the double.
-
-If you encounter this flag in production code, verify the exact doubled set from
-the environment metadata before generating insert statements.
+Doubles the entire dependency tree (all CDS views and tables). Determine the
+full set from view metadata and seed each entity actually read by the
+production SELECT. Verify the doubled set before generating inserts.
 
 ### Worked example
-
-A view with a join + filter via an association:
 
 ```abap
 define view <view_under_test>
@@ -104,13 +86,11 @@ define view <view_under_test>
 where _Other.<filter_field> = <constant>
 ```
 
-Doubled entities: `<leaf_table_a>` AND `<target_view_b>`.
-
-Insert pattern:
+Doubled set: `<leaf_table_a>` AND `<target_view_b>`. Insert pattern:
 
 ```abap
-DATA leaf_rows   TYPE STANDARD TABLE OF <leaf_table_a>.    " field names match the transparent table columns (UPPER_CASE)
-DATA target_rows TYPE STANDARD TABLE OF <target_view_b>.   " field names match what the CDS view exposes — camelCase if the view uses aliases, UPPER_CASE if it exposes DB columns directly
+DATA leaf_rows   TYPE STANDARD TABLE OF <leaf_table_a>.    " DB column names — UPPER_CASE
+DATA target_rows TYPE STANDARD TABLE OF <target_view_b>.   " View element names — camelCase if aliased
 
 target_rows = VALUE #( ( <key_b> = '...' <filter_field> = <constant> ) ).
 leaf_rows   = VALUE #( ( <key_a> = '...' <other_field> = '...' ) ).
@@ -119,41 +99,35 @@ cds_environment->insert_test_data( i_data = target_rows ).
 cds_environment->insert_test_data( i_data = leaf_rows ).
 ```
 
-## Common errors and how to read them
+## Common errors
 
 | Error | Cause | Fix |
 |---|---|---|
-| `CX_CDS_FAILURE: The test double '<VIEW_UNDER_TEST>' not found` | You inserted with `STANDARD TABLE OF <view_under_test>` | Insert with the row type of the immediate `select from` source or association target instead |
-| `CX_CDS_FAILURE: The test double '<LEAF_OF_ASSOC_TARGET>' not found` | You inserted into the leaf table behind an association target | Insert with the row type of the **target CDS view** itself — that is what got doubled |
-| `Test double already created for <ENTITY> as part of UNIT testing of <VIEW>` | You called `create_for_multiple_cds` listing both the view and its association target | Use plain `create( i_for_entity = <view> )` only — the target is auto-doubled |
-| `Test double already created for <SHARED_TABLE>` when using `create_for_multiple_cds` with two independent views | Both views select from the same underlying table; the framework tries to double it twice | Pass only one view to `create_for_multiple_cds` and handle the shared table via a single `insert_test_data` call, or create two separate `cl_cds_test_environment` instances |
+| `CX_CDS_FAILURE: The test double '<VIEW_UNDER_TEST>' not found` | Inserted with the view-under-test row type | Insert with the immediate `select from` source / association target instead |
+| `CX_CDS_FAILURE: The test double '<LEAF_OF_ASSOC_TARGET>' not found` | Inserted into the leaf table behind an association target | Insert with the row type of the **target CDS view** itself |
+| `Test double already created for <ENTITY> as part of UNIT testing of <VIEW>` | `create_for_multiple_cds` listed both view and its association target | Use plain `create( i_for_entity = <view> )` — the target is auto-doubled |
+| `Test double already created for <SHARED_TABLE>` (multi-cds with two views) | Both views select from the same table | Pass only one view, share the seeded table; or create two separate environments |
 
 ## Diagnostic technique
 
-When you do not yet know which entities the framework will double:
+Before generating inserts:
+1. Open `<view_under_test>`.
+2. Note the `select from <leaf_a>` table.
+3. Note every `association ... to <other_view>` target.
+4. Doubled set = `{ <leaf_a> } ∪ { <other_view>, ... }`.
+5. Seed each doubled entity that participates in the WHERE/JOIN filter
+   actually exercised by production code.
 
-1. Open the source of `<view_under_test>`.
-2. Note the `select from <leaf_a>` table name.
-3. Note every `association ... to <other_view>` target name.
-4. The doubled set = `{ <leaf_a> } ∪ { <other_view>, ... }`.
-5. Generate test data with the row type of each doubled entity that participates
-   in the WHERE/JOIN filter actually exercised by the production code.
+## Rules
 
-## Usage rules
-
-- Use this pattern only when the production code reads CDS entities/views.
-- Do not use this pattern for direct SQL table access unless the source also uses CDS access.
+- Only when production reads CDS entities/views.
 - Verify exact row types before generating final code.
-- Do **not** use `create_for_multiple_cds` to add a view's own association
-  target — it is already doubled.
-- `create_for_multiple_cds` is the right API when production code reads two or
-  more CDS entities that are **not** related by association (neither is an
-  association target of the other in the doubled set). If both views share a
-  common `select from` source, see the Common errors table above.
-- `test_associations = abap_true` does not change which entities are doubled for
-  modeled associations — the association target view is doubled either way.
-  However, `test_associations = abap_true` **is** required when production code
-  navigates an association in ABAP (e.g. reads via `_Other-SomeField` in a
-  SELECT or EML path) — without it, association navigation returns empty even
-  when the target double has data seeded.
-- If CDS dependencies cannot be identified, inspect metadata or report assumptions.
+- Do not list a view's own association targets in `create_for_multiple_cds`.
+- `create_for_multiple_cds` is correct for two or more **unrelated** CDS
+  entities (neither is an association target of the other in the doubled
+  set). For shared `select from` sources, see the Common errors table.
+- `test_associations = abap_true` does not change which entities are doubled
+  for modelled associations — but it **is** required when production
+  navigates an association in ABAP (e.g. `_Other-SomeField` in SELECT or EML
+  paths). Without it, association navigation returns empty even when the
+  target double has data seeded.

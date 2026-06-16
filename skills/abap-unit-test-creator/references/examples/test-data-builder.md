@@ -1,25 +1,21 @@
 # Example: Local Test Data Builder
 
-Use this pattern when test data construction is repetitive across multiple test
-methods. A builder centralizes field assignments, reduces duplication, and makes
-test intent visible.
+Use when test data construction repeats across multiple methods. A builder
+centralises field assignments and makes intent visible.
 
-Prefer a local builder class when:
-- the same entity structure is constructed in three or more test methods;
-- the production entity has many fields but tests only vary a few of them;
-- a project-wide builder does not already exist for this entity.
+Prefer a local builder when:
+- the same entity structure is built in 3+ test methods, AND
+- the entity has many fields but tests only vary a few, AND
+- no project-wide builder already exists.
 
-If a project-wide builder or factory already exists, use that instead.
+If a project-wide builder/factory exists, extend it instead.
 
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
-
-"--- Local builder: produces test instances of <entity_structure> ---
 CLASS ltd_<entity_name>_builder DEFINITION FINAL.
   PUBLIC SECTION.
     METHODS constructor.
 
-    "--- Setter methods — each returns ME for fluent chaining ---
     METHODS set_<field_1>
       IMPORTING iv_value TYPE <field_1_type>
       RETURNING VALUE(ro_builder) TYPE REF TO ltd_<entity_name>_builder.
@@ -37,7 +33,6 @@ ENDCLASS.
 
 CLASS ltd_<entity_name>_builder IMPLEMENTATION.
   METHOD constructor.
-    "--- Default values — override with set_* methods ---
     ms_entity-<field_1> = <sensible_default_1>.
     ms_entity-<field_2> = <sensible_default_2>.
   ENDMETHOD.
@@ -58,66 +53,37 @@ CLASS ltd_<entity_name>_builder IMPLEMENTATION.
 ENDCLASS.
 ```
 
-## Usage inside a test class
+Use in tests:
 
 ```abap
-CLASS ltc_<unit_name> DEFINITION FINAL FOR TESTING
-  DURATION SHORT
-  RISK LEVEL HARMLESS.
+METHOD <method>_valid_input.
+  DATA(ls_input) = NEW ltd_<entity_name>_builder( )->build( ).
 
-  PRIVATE SECTION.
-    DATA cut TYPE REF TO <class_under_test>.
-    METHODS setup.
-    METHODS <method>_valid_input   FOR TESTING.
-    METHODS <method>_missing_field FOR TESTING.
-ENDCLASS.
+  DATA(lv_result) = cut-><method>( ls_input ).
 
-CLASS ltc_<unit_name> IMPLEMENTATION.
-  METHOD setup.
-    cut = NEW #( ).
-  ENDMETHOD.
+  cl_abap_unit_assert=>assert_equals(
+    exp = <expected_value>
+    act = lv_result
+    msg = 'Valid entity should produce expected result' ).
+ENDMETHOD.
 
-  METHOD <method>_valid_input.
-    " Arrange — minimal fluent construction
-    DATA(ls_input) = NEW ltd_<entity_name>_builder( )->build( ).
+METHOD <method>_missing_field.
+  DATA(ls_input) = NEW ltd_<entity_name>_builder( )
+                     ->set_<field_1>( iv_value = '' )
+                     ->build( ).
 
-    " Act
-    DATA(lv_result) = cut-><method>( ls_input ).
+  DATA(lv_result) = cut-><method>( ls_input ).
 
-    " Assert
-    cl_abap_unit_assert=>assert_equals(
-      exp = <expected_value>
-      act = lv_result
-      msg = 'Valid entity should produce expected result' ).
-  ENDMETHOD.
-
-  METHOD <method>_missing_field.
-    " Arrange — override one field to trigger the error path
-    DATA(ls_input) = NEW ltd_<entity_name>_builder( )
-                       ->set_<field_1>( iv_value = '' )
-                       ->build( ).
-
-    " Act
-    DATA(lv_result) = cut-><method>( ls_input ).
-
-    " Assert
-    cl_abap_unit_assert=>assert_initial(
-      act = lv_result
-      msg = 'Missing field_1 should produce empty result' ).
-  ENDMETHOD.
-ENDCLASS.
+  cl_abap_unit_assert=>assert_initial(
+    act = lv_result
+    msg = 'Missing field_1 should produce empty result' ).
+ENDMETHOD.
 ```
 
-## Usage Rules
-
-- Place the builder class (`ltd_`) before the test class in the test-class
-  include area.
-- Provide sensible defaults in the constructor so each test only overrides
-  the fields relevant to its scenario.
-- Do not put assertion logic inside the builder — builders produce data only.
-- Keep the builder limited to the fields actually used across tests; do not
-  pre-populate every field of a wide structure.
-- Use fluent chaining (`RETURNING VALUE(ro_builder) TYPE REF TO ...`) only when
-  the project profile allows method chaining patterns.
-- If a project-wide builder already exists, extend it rather than creating a
-  duplicate local one.
+Rules:
+- Place the builder (`ltd_…_builder`) before the test class in the include.
+- Defaults in the constructor; tests override only fields they care about.
+- Builders produce data only — no assertion logic.
+- Limit the builder to fields actually used; do not pre-populate every
+  field of a wide structure.
+- Use fluent chaining only when the project profile allows it.

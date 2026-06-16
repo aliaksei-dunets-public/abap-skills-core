@@ -1,7 +1,8 @@
 # Config Template: abap-vs-reader
 
-Documents what must be present in each config file for the `abap-vs-reader` skill to
-function correctly.
+Required fields for the project's config files. The skill is **virtual-URI
+first**: Phase 1 (`abap:/repotree-v1/...`) handles all single-object reads.
+Physical cache is the fallback.
 
 ---
 
@@ -9,116 +10,84 @@ function correctly.
 
 | Field | Format | Description |
 |---|---|---|
-| `primary_namespace` | `(NS)` e.g. `(DEMO)` | Default namespace prepended to bare object names that have no prefix. Used in Step 1 of the skill when the user provides a name like `CL_MY_CLASS` without a namespace. |
-
-Example:
+| `primary_namespace` | `(NS)` e.g. `(DEMO)` | Prepended to bare object names with no prefix. Asked from the user if missing. |
 
 ```markdown
-# Project Config
-
 primary_namespace: (DEMO)
 ```
 
 ---
 
-## Required in `configs/system.md`
+## Required in `configs/system.md` — Phase 1 (virtual URI, primary)
+
+Without these, Phase 1 cannot run and the skill drops to the slower fallback.
 
 | Field | Format | Description |
 |---|---|---|
-| `system_id` | `<ID>` e.g. `ABC_001_DEMOUSER_EN` | SAP system connection ID as shown in the ADT VSCode extension. Must match the segment immediately after `/repotree-v1/` in ADT paths. |
-| `cache_base` | Absolute path | Full path to the ADT VSCode extension cache root for this system. This is the directory that contains the `.adt/` subdirectory tree. |
-| `repotree_package_path` | URL-encoded path | The package path segment used in repotree URIs, e.g. `System%20Library/(DEMO)PKG/Source%20Library/(DEMO)PKG`. Used when constructing full repotree URIs for display or linking. |
+| `system_id` | `<ID>` e.g. `ABC_001_USER_EN` | ADT system connection ID. Must match the segment after `/repotree-v1/`. |
+| `virtual_root_segment` | Display segment | Top-level segment under `repotree-v1/<system_id>/`. Almost always `System Library` (use `Local Objects ($TMP)` for `$TMP`). Pass literal spaces and parens — do **not** pre-encode. |
+| `virtual_top_package` | `(NS)PKG` | Display name of the top package, e.g. `(DEMO)PP`. |
 
-Example:
+### Optional Phase 1 hints
+
+| Field | Format | Description |
+|---|---|---|
+| `virtual_default_subpackage_chain` | `(NS)A/(NS)B` | Default sub-package chain inserted when the user gives a bare name. Empty if objects sit directly under `virtual_top_package`. |
+| `virtual_known_subpackages` | YAML map | Object-name pattern → sub-package chain. Lets the skill jump straight to the right URI without enumerating. |
+| `virtual_type_label_overrides` | YAML map | Object-type → URI type-label overrides for custom types not covered by `references/object-types.md`. |
 
 ```markdown
-# ADT System Config — DEMO
-
 system_id: ABC_001_USER_EN
 label: ABC — Development (VSCode ADT)
-cache_base: c:/Users/YourUser/AppData/Roaming/Code/User/workspaceStorage/<hash>/SAPSE.adt-vscode/adtWorkspace/.metadata/.plugins/org.eclipse.core.resources.semantic/.cache/ABC_001_USER_EN
-repotree_package_path: System%20Library/(DEMO)PKG/Source%20Library/(DEMO)PKG
-```
-
----
-
-## Required in `configs/system.md` for the Phase 0.5 fast path
-
-These fields enable the **virtual `abap:` URI** route (Phase 0.5 of the skill).
-Without them the agent falls back to the slower physical-cache path.
-
-| Field | Format | Description |
-|---|---|---|
-| `virtual_root_segment` | Display segment | Top-level segment under `repotree-v1/<system_id>/`. Almost always `System Library` (use `Local Objects ($TMP)` for `$TMP` development). Pass **literal** spaces and parentheses — do not pre-encode. |
-| `virtual_top_package` | `(NS)PKG` | Display name of the top package, e.g. `(DEMO)PP`. Combined with `virtual_root_segment` to form the URI prefix. |
-| `virtual_default_subpackage_chain` | `(NS)A/(NS)B` | Optional. Default sub-package chain inserted between the top package and the type-label folder when the user provides a bare object name. Leave empty if all relevant objects sit directly under `virtual_top_package`. |
-| `virtual_known_subpackages` | YAML map | Optional. Map of object-name patterns → sub-package chain. Lets the skill jump directly to the right URI for well-known projects without enumerating the package tree. |
-
-Example:
-
-```markdown
-# Phase 0.5 fast-path config
-
 virtual_root_segment: System Library
 virtual_top_package: (DEMO)PP
-virtual_default_subpackage_chain: 
+virtual_default_subpackage_chain:
 virtual_known_subpackages:
   '(DEMO)CL_UPLOAD_*': (DEMO)COCKPITS/(DEMO)UPLOAD_FILE
   '(DEMO)I_PRICING_*': (DEMO)PRICING
 ```
 
-> **Reading rule.** The agent must pass these segments to `read_file` *literally*
-> (with spaces and parentheses), not URL-encoded. The `read_file` tool URL-encodes
-> them internally when it forwards the request to the ADT virtual filesystem
-> provider. Pre-encoding produces ENOENT.
+> Pass these segments to `read_file` literally (with spaces and parens). The
+> `read_file` tool URL-encodes internally — pre-encoding produces ENOENT.
 
 ---
 
-## Object-type label mapping for the virtual URI
+## Required in `configs/system.md` — Phase 2 (physical cache, fallback)
 
-The skill's Step 2.3.5 documents the canonical type-label segments to use in
-virtual URIs. Projects that introduce custom or extension object types should
-add overrides here:
+Used only when Phase 1 fails (ENOENT/empty), and for fuzzy lookup (Phase 3).
 
 | Field | Format | Description |
 |---|---|---|
-| `virtual_type_label_overrides` | YAML map | Optional. Object-type → URI segment overrides for non-standard or extension types not covered by Step 2.3.5. |
-
-Example:
+| `cache_base` | Absolute path | ADT extension cache root containing the `.adt/` subdirectory tree. |
+| `repotree_package_path` | URL-encoded path | URL-encoded package path used to render display links back to the user. Optional but recommended. |
 
 ```markdown
-virtual_type_label_overrides:
-  Z_CUSTOM_TYPE: Source Code Library/Custom Objects
+cache_base: c:/Users/YourUser/AppData/Roaming/Code/User/workspaceStorage/<hash>/SAPSE.adt-vscode/adtWorkspace/.metadata/.plugins/org.eclipse.core.resources.semantic/.cache/ABC_001_USER_EN
+repotree_package_path: System%20Library/(DEMO)PKG/Source%20Library/(DEMO)PKG
 ```
 
----
-
-## Recommended in `configs/system.md`
-
-| Field | Format | Description |
-|---|---|---|
-| `label` | Free text | Human-readable label for the system (e.g. `ABC — Development (VSCode ADT)`). Used in display output and log messages to identify which system is being accessed. |
-
----
-
-## How to find `cache_base`
-
-The ADT VSCode extension stores its semantic cache under:
+### How to find `cache_base`
 
 ```
 %APPDATA%\Code\User\workspaceStorage\<workspace-hash>\SAPSE.adt-vscode\adtWorkspace\.metadata\.plugins\org.eclipse.core.resources.semantic\.cache\<SYSTEM_ID>
 ```
 
-To find the correct `<workspace-hash>`, open VS Code, connect to your SAP system via
-the ADT extension, then look in `%APPDATA%\Code\User\workspaceStorage` for the folder
-whose `workspace.json` refers to your project. The `<SYSTEM_ID>` directory inside the
-cache will match the system ID shown in the ADT extension.
+Find the right `<workspace-hash>` by opening VS Code, connecting to the system
+via the ADT extension, then matching `workspace.json` in
+`%APPDATA%\Code\User\workspaceStorage`. The `<SYSTEM_ID>` inside the cache must
+match the ADT system ID.
 
 ---
 
-## config.md minimal content
+## Recommended
 
-The `configs/config.md` file in the project must at minimum reference `system.md`:
+| Field | Format | Description |
+|---|---|---|
+| `label` | Free text | Human-readable system label, used in display output. |
+
+---
+
+## `configs/config.md` minimal content
 
 ```markdown
 # ABAP VS Reader — Project Config

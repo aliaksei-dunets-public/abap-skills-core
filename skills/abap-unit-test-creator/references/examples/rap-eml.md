@@ -1,13 +1,14 @@
-# Example: RAP EML-Based Unit Test Pattern
+# Example: RAP EML-Based Test
 
-Use this example when the behavior must be triggered through RAP runtime semantics, such as validations, determinations, actions, or transactional buffer behavior.
+Use when behavior must be triggered through RAP runtime semantics —
+validations, determinations, actions, or transactional buffer behavior.
 
-Use only verified BDEF names, entity names, field names, keys, and response types.
+> **DURATION:** EML tests that internally trigger a BDEF kernel lookup
+> (`cl_abap_behvdescr=>get_instance` or similar) may exceed the `SHORT`
+> budget — use `DURATION MEDIUM`. Pure EML tests with no kernel lookup may
+> stay on `DURATION SHORT`.
 
-> **DURATION note:** EML tests that internally trigger a BDEF kernel lookup
-> (`cl_abap_behvdescr=>get_instance` or similar) may exceed the `SHORT` time
-> budget. Use `DURATION MEDIUM` for such tests. Pure EML tests that do not
-> perform a kernel BDEF lookup may use `DURATION SHORT`.
+Use only verified BDEF, entity, field, and key names.
 
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
@@ -50,7 +51,7 @@ CLASS ltc_<behavior_entity> IMPLEMENTATION.
 ENDCLASS.
 ```
 
-Negative validation pattern:
+Negative validation:
 
 ```abap
 cl_abap_unit_assert=>assert_not_initial(
@@ -62,9 +63,8 @@ cl_abap_unit_assert=>assert_not_initial(
   msg = 'Invalid input should produce a reported message' ).
 ```
 
-Usage rules:
-
-- Prefer `IN LOCAL MODE` when testing behavior implementation internals and when supported.
-- Use `ROLLBACK ENTITIES` in teardown for tests that modify transactional state.
-- Do not use `COMMIT ENTITIES` for isolated unit tests unless explicitly requested and safe.
-- Do not generate generic draft EML unless the behavior definition confirms draft behavior and required fields.
+Rules:
+- Prefer `IN LOCAL MODE` for behavior-implementation internals.
+- `ROLLBACK ENTITIES` in teardown for state-mutating tests.
+- No `COMMIT ENTITIES` unless explicitly requested.
+- Do not invent draft EML — confirm BDEF, fields, and required keys first.

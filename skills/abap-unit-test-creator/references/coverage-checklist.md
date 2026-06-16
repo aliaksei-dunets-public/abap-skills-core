@@ -1,62 +1,37 @@
-# Coverage Checklist for ABAP Unit Test Authoring
+# Coverage Checklist
 
-Use this reference when building a coverage plan, extending existing coverage, or
-deciding which scenarios to test.
+Use when planning, extending, or auditing test coverage.
 
-## Core Coverage Checklist
+## Scenario checklist
 
-For each relevant method, handler, validation, determination, action, or behavior
+For each method, handler, validation, determination, action, or behavior
 operation, cover where applicable:
 
-- successful path;
-- empty input;
-- invalid input;
-- missing dependency result;
-- duplicate input;
-- conflicting input;
-- boundary values;
-- exception path;
-- message path;
-- `failed` response content;
-- `reported` response content;
-- `mapped` response content;
+- success path; empty input; invalid input; missing dependency result;
+- duplicate input; conflicting input; boundary values;
+- exception path; message path;
+- `failed` / `reported` / `mapped` content;
 - no unintended persistence;
 - dependency interaction result;
-- dependency not called when validation fails early;
+- dependency NOT called when validation fails early;
 - ordering or aggregation behavior where relevant.
 
-Do not add low-value tests that only execute code without meaningful assertions.
+Do not add tests that execute code without meaningful assertions.
 
-## Assertion Rules
+## Assertions
 
-Use `cl_abap_unit_assert` with meaningful diagnostic messages.
+Use `cl_abap_unit_assert` with diagnostic messages. Prefer specific over
+generic: `assert_equals`, `assert_initial`, `assert_not_initial`,
+`assert_bound`, `assert_not_bound`, `assert_true`, `assert_false`, `fail`
+for unreachable paths. Each assertion should identify the broken behavior.
 
-Prefer specific assertions:
+## Value objects / data holders
 
-- `assert_equals`;
-- `assert_initial`;
-- `assert_not_initial`;
-- `assert_bound`;
-- `assert_not_bound`;
-- `assert_true`;
-- `assert_false`;
-- `fail` for unreachable paths.
+For classes that hold data without external dependencies:
 
-Avoid generic assertions when a more precise assertion is possible.
-
-Every assertion should help identify the broken behavior.
-
-## Value-Object and Data-Holder Pattern
-
-For classes that hold data without external dependencies (value objects, data
-containers, configuration holders), the test pattern is:
-
-- Construct the object with known input values.
-- Assert each readable attribute individually with `assert_equals`.
-- Cover the constructor's default values (no-argument construction).
-- Cover each setter or factory method that changes internal state.
-- Verify that attributes are independent — setting one does not affect others.
-
-Do not test getters in isolation; test the observable state of the object as a
-whole after construction or mutation. One test method per meaningful state
-combination is sufficient — do not generate one method per field.
+- Construct with known input, assert each readable attribute.
+- Cover constructor defaults (no-argument construction).
+- Cover each setter / factory that mutates state.
+- Verify attribute independence (setting one does not affect others).
+- Test observable state after construction or mutation, not getters in
+  isolation. One test per meaningful state combination — not one per field.

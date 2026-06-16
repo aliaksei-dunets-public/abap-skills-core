@@ -1,8 +1,7 @@
 # Example: SQL Table Isolation with `cl_osql_test_environment`
 
-Use this example when production code directly reads transparent database tables with Open SQL.
-
-Use only verified table names and row types. Do not use productive data.
+Use when production directly reads transparent DB tables with Open SQL. Use
+only verified table names and row types.
 
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
@@ -54,9 +53,9 @@ CLASS ltc_<unit_name> IMPLEMENTATION.
 ENDCLASS.
 ```
 
-Usage rules:
-
-- Use this pattern only for direct Open SQL table access.
-- Include every directly selected table in the dependency list.
-- Clear doubles between tests to prevent cross-test contamination.
-- If the target environment does not allow this API, use project-approved isolation or report a blocker.
+Rules:
+- Direct Open SQL table access only.
+- List every directly selected table in the dependency list.
+- Clear doubles between tests.
+- If the environment forbids this API, use a project-approved isolation
+  pattern or report a blocker.

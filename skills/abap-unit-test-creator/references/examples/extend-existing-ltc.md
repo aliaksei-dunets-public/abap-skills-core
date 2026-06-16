@@ -1,8 +1,7 @@
 # Example: Extending an Existing Local Test Class
 
-Use this pattern when the source already contains a local test class and the user asks to add missing coverage.
-
-The agent should preserve existing structure and append the smallest required changes.
+Use when source already contains a local test class and the user asks to add
+coverage. Preserve existing structure; append the smallest required change.
 
 ```abap
 "--- ILLUSTRATIVE PATCH SHAPE ONLY — use real existing class/method names ---
@@ -17,8 +16,7 @@ CLASS ltc_<existing_test_class> IMPLEMENTATION.
   " Existing implementation stays unchanged.
 
   METHOD <method_under_test>_<new_scenario>.
-    " Arrange
-    " Reuse existing builders/fakes/setup if they are sound.
+    " Arrange — reuse existing builders/fakes/setup if they are sound.
 
     " Act
 
@@ -31,10 +29,9 @@ CLASS ltc_<existing_test_class> IMPLEMENTATION.
 ENDCLASS.
 ```
 
-Usage rules:
-
-- Do not rewrite unrelated tests.
-- Do not rename existing helpers or fixtures unless required for compilation.
-- Prefer reusing existing builders and fakes.
-- Add only support code needed by the new test scenario.
-- If existing tests are unsafe or misleading, report that separately before broad rewrites.
+Rules:
+- Do not rewrite unrelated tests or rename existing helpers unless required
+  for compilation. Reuse existing builders/fakes.
+- Add only support code the new scenario needs.
+- If existing tests are unsafe or misleading, report that separately rather
+  than making a broad rewrite.

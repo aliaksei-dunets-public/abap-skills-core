@@ -1,6 +1,9 @@
 # abap-code-review — Config Template
 
-## Required Fields (must be in configs/config.md or linked files)
+## Required in `configs/config.md`
+
+Fields may live in `configs/config.md` directly or in any file lazy-linked
+from it via `→ Read configs/<file>.md for ...`.
 
 - `primary_namespace` — ABAP namespace prefix for NAME-01 check (e.g. `/DEMO/`)
 - `ddic_naming_rules` — Naming patterns for Domain, Data Element, Structure, Table Type, DB Table

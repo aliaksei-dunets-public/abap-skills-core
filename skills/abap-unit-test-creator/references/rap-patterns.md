@@ -1,150 +1,55 @@
-# RAP Patterns for ABAP Unit Test Authoring
+# RAP Patterns
 
-Use this reference when the unit under test is a RAP behavior pool, handler,
-validation, determination, action, saver, draft flow, or EML scenario.
+Use when the unit is a RAP behavior pool, handler, validation, determination,
+action, saver, draft flow, or EML scenario.
 
-## RAP Testing Decision Tree
+Use only verified BDEF, entity, field, key, and response names. Never invent
+local handler names like `lhc_handler` — derive them from the behavior
+implementation.
 
-Before generating RAP tests, identify the kind of RAP logic being tested.
+## Pattern selection
 
-### 1. Pure helper logic inside a behavior pool
+| Logic kind | Approach |
+|---|---|
+| Pure helper inside a behavior pool, accessible | Direct method invocation. Avoid EML. Isolate dependencies via local fakes or project seams. |
+| Validation / determination depending on RAP transactional state | EML test with `MODIFY/READ ENTITIES … IN LOCAL MODE`. |
+| Direct handler method call | Only when handler class is known, the test class can legally access it, importing/changing parameters can be constructed correctly, and no unavailable runtime semantics are needed. Otherwise switch to EML. |
+| Saver / finalize / check_before_save | Assert collected messages, failed/reported, validation results, dependency calls, buffer effects. Never cause productive persistence. Report a blocker if isolation is impossible. |
+| Draft-enabled behavior | Determine the exact target first: active, draft, draft action, activate, edit, discard, prepare, validation during draft. Confirm BDEF, aliases, key fields, entity fields before generating EML. |
+| Instance action | `MODIFY ENTITIES … CREATE` first, then `MODIFY ENTITIES … ACTION … FIELDS ( ) WITH`. |
+| Static / factory action | Trigger directly per BDEF signature, no prior instance. |
+| Unmanaged behavior | Inspect custom implementation — do not assume managed persistence. Test explicit handlers, injected repositories, or EML-visible behavior. |
 
-If the logic is isolated and accessible:
+## EML rules
 
-- prefer direct method invocation;
-- avoid unnecessary EML;
-- use local test setup and assertions;
-- isolate dependencies through local fakes or existing project seams.
+- `%tky` is the default key reference. Use `%key` only when the entity has no
+  draft behavior and `%tky` does not apply. Never mix `%tky` and `%key` in
+  one EML block.
+- Assert `failed`, `reported`, `mapped` where relevant.
+- `ROLLBACK ENTITIES` in teardown when the test mutates transactional state.
+- No `COMMIT ENTITIES` unless the user requests an integration scenario and
+  the environment supports it safely.
+- Keep test data minimal. Never depend on productive DB content.
 
-### 2. Validation or determination depending on RAP transactional state
+## Dependency isolation in RAP tests
 
-Prefer EML-based tests when behavior must be triggered by RAP runtime semantics.
+- SQL/CDS reads: use the matching test environment if allowed.
+- Services, repositories, message helpers, auth helpers, number ranges,
+  locks, external APIs: existing seam → local fake → blocker.
 
-Use where applicable and supported:
+## Action-test assertions
 
-```abap
-MODIFY ENTITIES ... IN LOCAL MODE
-READ ENTITIES ... IN LOCAL MODE
-```
+- Result structure (if any).
+- `failed` and `reported` for error paths.
+- Buffer values via `READ ENTITIES … IN LOCAL MODE`.
+- Action not invoked / no result when preconditions fail.
 
-Assert against:
+## Output assertions
 
-- `failed`;
-- `reported`;
-- `mapped`;
-- read results;
-- messages;
-- changed buffered values.
-
-### 3. Direct handler method testing
-
-Use direct handler invocation only when:
-
-- the handler class name is known from the source;
-- the local test class can legally access it;
-- required importing/changing parameters can be constructed correctly;
-- the test does not depend on unavailable RAP runtime semantics.
-
-Never invent handler names such as `lhc_handler`. Derive the actual local handler
-class name from the behavior implementation.
-
-If the handler is not safely accessible, switch to EML-based testing.
-
-### 4. Saver, finalize, and check_before_save logic
-
-Do not cause productive persistence.
-
-Prefer asserting:
-
-- collected messages;
-- failed/reported structures;
-- validation results;
-- calls to injected dependencies;
-- transactional buffer effects where accessible.
-
-If saver logic cannot be isolated, report a testability blocker.
-
-### 5. Draft-enabled behavior
-
-Before generating code, determine whether the test targets:
-
-- active instance behavior;
-- draft instance behavior;
-- draft actions;
-- activation;
-- edit;
-- discard;
-- prepare;
-- validation during draft flow.
-
-Do not generate generic draft EML without confirming the behavior definition,
-behavior aliases, key fields, and entity fields.
-
-### 6. Instance and Static Actions
-
-Before generating tests for a RAP action, identify:
-
-- whether the action is an instance action, a static action, or a factory action;
-- the action's importing and result parameters from the behavior definition;
-- whether the action affects the transactional buffer, raises messages, or returns
-  a result structure.
-
-For **instance actions**, construct an entity instance first with `MODIFY ENTITIES ... CREATE`,
-then trigger the action with `MODIFY ENTITIES ... ACTION ... FIELDS ( ) WITH`.
-
-For **static/factory actions**, trigger the action without prior instance creation.
-Use the correct calling signature as defined in the BDEF.
-
-Assert:
-
-- the action result structure (if any);
-- `failed` and `reported` for error paths;
-- changed buffer values readable via `READ ENTITIES ... IN LOCAL MODE`;
-- that the action was not called or produced no result when preconditions fail.
-
-Do not generate action EML without verified action name, parameter names, and key fields.
-
-### 7. Unmanaged behavior
-
-For unmanaged RAP, inspect custom implementation details carefully.
-
-Do not assume managed persistence behavior.
-
-Prefer tests around explicit handler methods, injected repositories, or
-EML-visible behavior depending on the source.
-
-## EML Test Rules
-
-When using EML in tests:
-
-- use only verified BDEF and entity names;
-- use only verified field names;
-- use `%tky` as the default key reference in all EML statements; use `%key` only
-  when the entity has no draft behavior and `%tky` is not available or not
-  applicable; never mix `%tky` and `%key` within the same EML statement block;
-- assert `failed`, `reported`, and `mapped` where relevant;
-- use `ROLLBACK ENTITIES` in teardown when EML changes transactional state;
-- avoid `COMMIT ENTITIES` unless the user explicitly asks for an
-  integration-like scenario and the environment supports it safely;
-- keep test data minimal;
-- do not depend on productive database content.
-
-## RAP Dependency Isolation
-
-When RAP logic reads SQL tables or CDS entities, isolate those reads with the
-appropriate test environment if available and allowed.
-
-When RAP logic calls services, repositories, message helpers, authorization
-helpers, number ranges, locks, or external APIs, prefer existing project seams or
-local fakes. If no seam exists, report a testability blocker.
-
-## RAP Output Assertions
-
-Prefer assertions against observable RAP behavior:
-
+Prefer observable RAP outcomes:
 - `failed` keys and causes;
 - `reported` messages and severities;
-- `mapped` content after create operations;
-- read-back values from transactional buffer;
-- absence of failed/reported entries for success paths;
-- dependency interactions when a fake captures calls.
+- `mapped` content after CREATE;
+- read-back values from the transactional buffer;
+- absence of failed/reported on success paths;
+- captured dependency interactions when a fake records calls.
