@@ -125,9 +125,6 @@ Bootstrap configs (and wrappers in submodule mode) for a new project.
 4. Print summary: skills updated, new wrappers (if any), submodule pointer
    status.
 
-> Note: each skill keeps its own copy of `references/source-reader.md`. A
-> `git pull` on the submodule updates all copies at once.
-
 ### Manual mode
 
 Automation is not available. Tell the user:

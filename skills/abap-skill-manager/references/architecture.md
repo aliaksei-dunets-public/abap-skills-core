@@ -46,7 +46,7 @@ The `source_reader` field in `project-config.md` (under `## Source Reader`)
 controls how skills fetch ABAP source. Values: `auto` (default) |
 `abap-vs-reader` | `mcp` | `ask`. With `auto`, skills probe for an MCP read
 tool first, then fall back to `abap-vs-reader`, then ask the user. Skills
-that use this field: `abap-code-review`, `abap-unit-test-creator`.
+that use this field: `abap-code-review`, `abap-unit-test-creator`, `abap-wiki-doc-creator`.
 
 **Setup:**
 

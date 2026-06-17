@@ -11,7 +11,10 @@ diff successive runs.
 | Skill | Wrapper | Config | Action |
 |---|---|---|---|
 | abap-code-review | ✓ | ✓ | skipped (already present) |
+| abap-unit-test-creator | created | created | ✓ |
 | abap-vs-reader | created | created | ✓ |
+| abap-wiki-doc-creator | created | created | ✓ |
+| abap-skill-manager | ✓ | — | skipped (no config required) |
 
 Follow with: "Fill in `$SKILLS_PATH/project-config.md` and each
 `configs/config.md`. Run `abap-skill-manager validate` to check for missing
@@ -27,12 +30,13 @@ required fields."
 Install mode: submodule
 Core: <current-SHA>  Remote: <remote-SHA>  [UP TO DATE | BEHIND N commits — run: abap-skill-manager update]
 
-| Skill                 | Wrapper | Config | TODOs | Notes                         |
-|-----------------------|---------|--------|-------|-------------------------------|
-| abap-code-review      | ✓       | ✓      | 0     |                               |
-| abap-skill-manager    | ✓       | —      | —     | no config required            |
-| abap-unit-test-creator| ✓       | ✓      | 0     |                               |
-| abap-vs-reader        | ✓       | ✓      | 0     |                               |
+| Skill                  | Wrapper | Config | TODOs | Notes                         |
+|------------------------|---------|--------|-------|-------------------------------|
+| abap-code-review       | ✓       | ✓      | 0     |                               |
+| abap-skill-manager     | ✓       | —      | —     | no config required            |
+| abap-unit-test-creator | ✓       | ✓      | 0     |                               |
+| abap-vs-reader         | ✓       | ✓      | 0     |                               |
+| abap-wiki-doc-creator  | ✓       | ✓      | 0     |                               |
 
 project-config.md: ✓  (TODOs: 0)
 ```
@@ -46,10 +50,12 @@ project-config.md: ✓  (TODOs: 0)
 
 Install mode: manual (no submodule — update via abap-skill-manager update)
 
-| Skill                 | SKILL.md | Config | TODOs | Notes                         |
-|-----------------------|----------|--------|-------|-------------------------------|
-| abap-code-review      | ✓        | ✓      | 0     |                               |
-| abap-vs-reader        | ✓        | ✓      | 0     |                               |
+| Skill                  | SKILL.md | Config | TODOs | Notes                         |
+|------------------------|----------|--------|-------|-------------------------------|
+| abap-code-review       | ✓        | ✓      | 0     |                               |
+| abap-unit-test-creator | ✓        | ✓      | 0     |                               |
+| abap-vs-reader         | ✓        | ✓      | 0     |                               |
+| abap-wiki-doc-creator  | ✓        | ✓      | 0     |                               |
 
 project-config.md: ✓  (TODOs: 0)
 ```
@@ -75,6 +81,10 @@ project-config.md: ✓  (TODOs: 0)
 ✓ system_id
 ✓ cache_base
 ✓ repotree_package_path
+
+### abap-wiki-doc-creator/configs/
+✓ output_path  (configs/config.md)
+✓ primary_namespace  (project-config.md)
 
 ### Skill self-tests
 ✓ abap-vs-reader: tests passed (9)
