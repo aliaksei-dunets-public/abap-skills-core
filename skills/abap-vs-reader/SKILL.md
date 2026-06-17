@@ -10,7 +10,7 @@ virtual URI first**; fall back to the physical cache only when virtual fails.
 
 | Route | Path shape | Role |
 |---|---|---|
-| **Virtual URI** (primary) | `abap:/repotree-v1/<system>/<root>/<package>/.../<TYPE_LABEL>/<DISPLAY_NAME>/<filename>` | Single-object reads. Pull-through fetch — works even if the object was never opened in the editor. |
+| **Virtual URI** (primary) | `abap:/repotree-v1/<system>/<root>/<package>/.../<TYPE_LABEL>/<DISPLAY_NAME>/<filename>` | Single-object reads. Pull-through fetch for the **main file only** — works even if never opened. Parts (definitions/implementations/macros/testclasses) require prior editor open. |
 | **Physical cache** (fallback) | `<cache_base>/.adt/<subdir>/<encoded_name>/<file>.<ext>` | Virtual route fails (ENOENT/empty/network); also for fuzzy lookup, grep, bulk listing. |
 
 `$ARGUMENTS` = ADT path / display name `(NS)NAME` / bare name + optional
@@ -35,7 +35,25 @@ virtual URI first**; fall back to the physical cache only when virtual fails.
 - `Z_FOO` / `Y_FOO` → keep bare.
 - Bare non-`Z`/`Y` → prepend `(<primary_namespace>)`.
 
-### Step 1.2 — Construct the URI
+### Step 1.2 — Construct the URI + pre-check physical cache
+
+**Before** calling `read_file`, run a one-line cache pre-check to know what files
+exist locally (costs nothing, saves retries):
+
+```powershell
+$encoded = "<encoded_name>"  # F3 encoding from references/cache-fallback.md
+Get-ChildItem -LiteralPath "<cache_base>/.adt/<subdir>/$encoded" -ErrorAction SilentlyContinue |
+  Select-Object Name, Length
+```
+
+Use the result to set expectations:
+- `.aclass` present → main body is readable from cache; virtual URI should also work.
+- `.acinc` files present → parts (definitions/implementations/etc.) are available.
+- **No `.acinc` files** → parts were never cached; do NOT attempt virtual URI reads for
+  `.clas.definitions.abap` etc. — they will ENOENT. Read `.aclass` now and tell the user
+  that local types are unavailable until they open the class in the ADT Project Explorer.
+
+Then construct the URI:
 
 ```
 abap:/repotree-v1/<system_id>/<virtual_root_segment>/<virtual_top_package>/<SUB_PACKAGE_CHAIN>/<TYPE_LABEL>/<DISPLAY_NAME>/<filename>

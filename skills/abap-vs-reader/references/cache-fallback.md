@@ -60,7 +60,23 @@ $dir = "<cache_base>/.adt/<subdir>/<encoded_name>"
 if (Test-Path $dir) { Get-ChildItem -LiteralPath $dir | Select Name, Length, LastWriteTime }
 ```
 
-EXISTS but empty / files older than the user's last save → treat as MISSING.
+EXISTS — check which files are present:
+
+```powershell
+Get-ChildItem -LiteralPath $dir | Select-Object Name, Length
+```
+
+Interpret the result:
+
+| Files found | Meaning | Action |
+|---|---|---|
+| `.aclass` only (no `.acinc`) | Main body cached; parts never opened in editor | Read `.aclass`; tell user local types are unavailable; ask them to open in ADT Project Explorer if parts are needed |
+| `.aclass` + `.acinc` files | Fully cached | Read all relevant files per `include_type` |
+| Directory empty | Cache entry exists but is hollow | Treat as MISSING → auto-open loop below |
+
+**Do not** attempt virtual URI reads for `.clas.definitions.abap` / `.clas.implementations.abap`
+when `.acinc` files are absent — they will return ENOENT. The parts are populated only when
+the user opens the class in the editor.
 
 MISSING → derive slash-form name (`(NS)CL_FOO` → `/NS/CL_FOO`; bare stays bare),
 trigger auto-open:

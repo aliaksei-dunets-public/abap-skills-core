@@ -45,7 +45,28 @@ Authoritative type mapping. Coordinate systems:
 
 > Suffixes can shift by SAP_BASIS / ADT extension version. When in doubt, expand the object node in the ADT Project Explorer — the on-screen filename wins.
 
-## Skip list (ADT metadata, not source)
+## Class physical cache layout
+
+A class folder under `classlib/classes/<encoded_name>/` contains:
+
+| File | Content | Always present? |
+|---|---|---|
+| `.aclass` | Full main-body source (CLASS DEFINITION + IMPLEMENTATION, public/protected/private sections). **This is the primary readable source.** | Yes — present after any virtual pull-through or editor open |
+| `*definitions.acinc` | Local class definitions (`CLASS lcl_foo DEFINITION`) | Only after editor open |
+| `*implementations.acinc` | Local class implementations (`CLASS lcl_foo IMPLEMENTATION`) | Only after editor open |
+| `*macros.acinc` | Macro definitions | Only after editor open |
+| `*testclasses.acinc` | Test class source | Only after editor open |
+| `.apclass` | ADT XML metadata — **not source, skip it** | Yes |
+
+**Key rule:** `.acinc` files are populated only when the user opens the class in the ADT
+Project Explorer (VS Code). Virtual pull-through fetch works for `.aclass` but does **not**
+cascade to `.acinc` parts. If `.acinc` files are absent:
+1. Read `.aclass` — it contains the full main class body.
+2. Tell the user: *"Local types (lcl_*) are not cached. Open the class in the ADT Project
+   Explorer once to make them available."*
+3. Do **not** retry virtual URI reads for `.clas.definitions.abap` etc. — they will ENOENT.
+
+
 
 ```
 .apclass  .apint  .apddls  .apddlxex  .apbdef  .apsrvds
