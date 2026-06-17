@@ -17,13 +17,6 @@ Use this reference when the review touches released API usage, extension boundar
 | CCORE-03 | Data access path that bypasses a released CDS view or BAPI and reads an SAP private table directly without explicit project approval | WARNING | |
 | CCORE-04 | Tight coupling to SAP implementation details (hard-coded internal keys, undocumented field offsets, private structure fields) that would break on an upgrade | WARNING | |
 
-## Review Questions
-
-- Does the code depend on a released API or a known stable extension point?
-- If it touches internal objects, is that explicitly allowed by the project context?
-- Does the change create future upgrade risk by coupling to implementation details?
-- Does the data access path bypass a released interface without clear justification?
-
 ## Reporting Guidance
 
 When released status cannot be confirmed during review, state that as a verification gap instead of inventing certainty.

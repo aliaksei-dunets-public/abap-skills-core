@@ -29,6 +29,10 @@ from it via `→ Read configs/<file>.md for ...`.
   Example: `rule_suppressions: [DOC-03, NAME-05]`
   Use when a rule is systematically irrelevant for the project (e.g. `DOC-03` when KT docs are tracked externally).
 
+- `suppress_severities` — Severity levels to omit from the report output. CRITICAL is always included.
+  Example: `suppress_severities: [INFO, WARNING]`
+  Use to focus the report on blockers only.
+
 ## Lazy Loading
 
 `config.md` is the required entry point. Use `→ Read configs/naming.md for ...` to link additional files.

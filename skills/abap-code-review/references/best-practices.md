@@ -2,21 +2,6 @@
 
 Use these heuristics to prioritize findings by engineering risk, not by style preference.
 
-## Review Category Order
-
-Always apply and report findings in this order — it matches the SKILL.md phase structure:
-
-1. **Performance** (PERF) — database access patterns, loop safety, aggregation
-2. **Clean ABAP** (CLEAN) — code structure, OO design, syntax modernity
-3. **Naming** (NAME) — identifiers, object names, parameter prefixes
-4. **RAP Correctness** (RAP) — behavior contract, EML, authorization
-5. **CDS Architecture** (CDS) — layering, annotations, associations
-6. **Clean Core** (CCORE) — released API usage, extension boundaries, upgrade safety
-7. **Testability** (TEST) — test presence, isolation, coverage
-8. **Documentation** (DOC) — ABAP Docs, KT references
-
-This order reflects descending risk to runtime behavior. Style and documentation findings must never outrank behavioral or contract defects in the findings table.
-
 ## Correctness
 
 Flag issues such as:

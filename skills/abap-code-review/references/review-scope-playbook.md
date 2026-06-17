@@ -25,6 +25,7 @@ Expected checks:
 
 - syntax when available
 - ABAP Unit for testable class logic
+- ATC check when review can be executed
 - references when dependency impact is unclear
 
 ## Package Review
@@ -43,7 +44,6 @@ Expected checks:
 
 - syntax for the reviewed slice when available
 - ABAP Unit for changed classes
-- ATC when the package slice can be checked meaningfully
 
 Guardrail:
 
@@ -64,7 +64,6 @@ Inspect:
 
 Expected checks:
 
-- ATC for the changed slice when available
 - ABAP Unit for changed classes
 - syntax or reference checks to resolve unclear dependencies
 
@@ -84,7 +83,6 @@ Expected checks:
 
 - ABAP Unit for changed classes
 - syntax or references when available
-- ATC when task-local review can be executed
 
 ## Evidence Standard
 

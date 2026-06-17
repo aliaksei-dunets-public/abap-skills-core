@@ -30,6 +30,7 @@ Read `configs/config.md` if it exists. If it references additional files (e.g. `
 - If `configs/config.md` defines `skip_categories`, exclude those category codes entirely (e.g. `skip_categories: [DOC, TEST]`).
 - If `configs/config.md` defines `active_categories`, run only those categories and skip the rest (e.g. `active_categories: [PERF, CLEAN, RAP]`). `active_categories` takes precedence over `skip_categories`.
 - If `configs/config.md` defines `rule_suppressions`, skip those individual rule IDs across all objects.
+- If `configs/config.md` defines `suppress_severities`, omit all findings at those severity levels from the output. CRITICAL findings are always included regardless of this setting. Example: `suppress_severities: [INFO, WARNING]` produces a CRITICAL-only report.
 
 A category or rule named explicitly in the user's request overrides both config and defaults — always honour an explicit instruction to include or exclude a specific check.
 
