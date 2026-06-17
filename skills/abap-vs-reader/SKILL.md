@@ -63,13 +63,12 @@ Call `read_file` on the URI.
 Cheapest → most expensive:
 
 1. Retry with **no** `<SUB_PACKAGE_CHAIN>` (object directly under top package).
-2. `list_dir` against the parent package URI; drill down until the matching
-   `<TYPE_LABEL>` folder appears.
-3. Phase 3 fuzzy lookup (the cache index tells you which sub-package the object
-   was previously read from, if any).
-4. Ask the user for the parent package as shown in the ADT Project Explorer.
+2. Phase 3 fuzzy lookup (free — local cache grep, no ADT requests).
+3. Ask the user to open the object manually in VS Code (`Ctrl+Shift+A` → type the name → Enter), then retry Phase 1 after they confirm.
 
-Persist confirmed mappings to `/memories/repo/` to skip this step next time.
+Do **not** call `list_dir` to hunt for the sub-package — it burns tokens and ADT requests for every subfolder. The user's one-time manual open is cheaper overall.
+
+Persist confirmed sub-package mappings to `/memories/repo/` after a successful read to skip this step next time.
 
 ### Step 1.5 — Class file selection
 
