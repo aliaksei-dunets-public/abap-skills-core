@@ -51,6 +51,18 @@ or the legacy `## Required Fields ...`).
 After any change, re-read the updated `CONFIG_TEMPLATE.md` and verify the
 validate example matches before saving.
 
+Changes outside `## Required ...` headings usually do not require manager updates by themselves. Examples:
+
+- new optional category codes such as `ARCH` or `TESTSUG`
+- revised output semantics in another skill
+- new recommended fields or explanatory notes
+
+For those cases, update `abap-skill-manager` only if one of these is true:
+
+1. the standard `project-config.md` template changed
+2. the `validate` command must enforce a new required field
+3. manager-owned examples or maintenance notes became misleading
+
 ---
 
 ## Checklist (apply for every skill change)

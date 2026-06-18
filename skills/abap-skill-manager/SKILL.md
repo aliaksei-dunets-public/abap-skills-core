@@ -189,6 +189,8 @@ Verify required config fields and run skill self-tests.
    - `## Required Fields ...` (no path) → check `$SKILLS_PATH/<skill>/configs/config.md`
      and any `→ Read configs/*.md` linked files.
 
+    Ignore optional examples, category lists, allowed-value notes, and other explanatory text outside `## Required ...` headings. They document behavior, but they do not change validation unless a required field was added, removed, or renamed.
+
    A field passes if present and its value does not contain `TODO`.
 
 4. **Skill self-tests:** for each skill (under `$CORE_PATH/skills/<skill>`

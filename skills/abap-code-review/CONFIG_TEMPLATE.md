@@ -19,9 +19,28 @@ from it via `→ Read configs/<file>.md for ...`.
 ## Category Control
 
 - `active_categories` — Run only the listed category codes; all others are skipped. Takes precedence over `skip_categories`.
-  Example: `active_categories: [PERF, CLEAN, RAP]`
+  Example: `active_categories: [ARCH, PERF, RAP]`
 - `skip_categories` — Skip the listed category codes entirely.
-  Example: `skip_categories: [DOC, TEST]`
+  Example: `skip_categories: [DOC, TESTSUG]`
+
+Available category codes:
+
+- `ARCH` — architectural suspicions, review leads, duplicate logic, dead or outdated code, risky assumptions
+- `PERF` — performance and SQL checks
+- `CLEAN` — Clean ABAP checks
+- `NAME` — naming checks
+- `RAP` — RAP correctness checks
+- `CDS` — CDS architecture checks
+- `CCORE` — Clean Core checks
+- `TEST` — testability checks in the reviewed code
+- `TESTSUG` — suggested additional tests section
+- `DOC` — documentation checks
+
+Notes:
+
+- `ARCH` controls the optional `Architectural suspicions / review leads` section.
+- `TESTSUG` controls the optional `Suggested tests` section.
+- Confirmed defects can still appear in the findings table under any active category, including architecture-driven analysis.
 
 ## Rule Suppression
 
@@ -40,3 +59,5 @@ from it via `→ Read configs/<file>.md for ...`.
 ## Global Behaviour
 
 Rules that reference a config field are skipped silently when that field is absent — no "not checked" entry is written to the report.
+
+`rule_suppressions` applies to rule IDs from the rule-backed validation pass. It does not disable architecture-driven findings; use `active_categories` or `skip_categories` for that.

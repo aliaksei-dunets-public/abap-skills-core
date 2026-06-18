@@ -13,13 +13,14 @@ Collect:
 - the named object
 - related includes or implementation parts
 - related local test classes or test includes when present
-- nearby referenced artifacts when they are required to validate impact or released API status
+- nearby referenced artifacts when they are required to validate behavior, impact, released API status, or business flow consistency
 
 Inspect:
 
 - active source
 - changed logic paths
 - tests that protect the changed behavior
+- the smallest set of related objects needed to understand the contract
 
 Expected checks:
 
@@ -34,7 +35,7 @@ Collect:
 
 - reviewable code artifacts in the package
 - changed or requested artifacts first when that information exists
-- only related artifacts needed to understand the changed behavior
+- only related artifacts needed to understand changed behavior, dependencies, and cross-object consistency
 
 Inspect:
 
@@ -48,6 +49,7 @@ Expected checks:
 Guardrail:
 
 - do not review every object in a large package by default when the requested slice is narrower
+- stop expanding once the current evidence can explain the behavior or justify a verification gap
 
 ## Transport Request Review
 
@@ -61,6 +63,7 @@ Inspect:
 
 - source for each changed object
 - cross-object behavior when the request changes interacting artifacts
+- related tests or support objects when they are needed to explain the changed contract
 
 Expected checks:
 
@@ -78,6 +81,7 @@ Inspect:
 
 - task-local source changes
 - contract and integration risks created by those changes
+- related tests when they should protect changed logic
 
 Expected checks:
 
@@ -88,4 +92,6 @@ Expected checks:
 
 - Read actual source before reporting findings.
 - Inspect tests when changed logic should be covered.
-- If a required artifact cannot be read or checked, record that as a verification gap.
+- Pull related context only when it changes the review conclusion.
+- Prefer a verification gap over a weak conclusion when a required artifact cannot be read or checked.
+- Use architectural suspicions for strong but incomplete signals, not for routine uncertainty.
