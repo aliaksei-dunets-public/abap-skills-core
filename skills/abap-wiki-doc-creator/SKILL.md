@@ -49,7 +49,7 @@ git diff --name-only <ref>
 git show --name-only --format="" <ref>
 ```
 
-Filter paths that correspond to ABAP objects (paths containing `.adt/`, `.aclass`, `.asddls`, `.asbdef`, `.acinc`, etc.). Extract object names by parsing the path's encoded segment (reverse-apply URL decoding from `references/object-sort-order.md`).
+Filter paths that correspond to ABAP objects (paths containing `.adt/`, `.asddls`, `.asbdef`, `.tabl`, `.prog`, etc.). Extract object names by parsing the path's encoded segment (reverse-apply URL decoding from `references/object-sort-order.md`).
 
 ### Package source
 
@@ -128,7 +128,7 @@ If a required source cannot be obtained after one scoped unblock attempt, mark t
 
 **READ order within types:**
 
-For classes (CLAS): read `.aclass` first (signature), then `implementations.acinc`, then `definitions.acinc`. Skip `testclasses.acinc` — test code is not documented in wiki.
+For classes (CLAS): read `.clas.abap` first (main body), then `.clas.implementations.abap`, then `.clas.definitions.abap`. Skip `.clas.testclasses.abap` — test code is not documented in wiki.
 
 For BDEF: read the single `.asbdef` file.
 

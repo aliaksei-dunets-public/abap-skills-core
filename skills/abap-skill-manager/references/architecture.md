@@ -14,10 +14,6 @@ abap-skills-core/          ← git submodule, shared across all projects
       SKILL.md             ← core logic, no project names, /DEMO/ examples only
       CONFIG_TEMPLATE.md   ← documents required/recommended config fields
       references/          ← supporting reference files
-      scripts/             ← helper scripts (e.g. open-abap.ps1)
-        tests/             ← optional self-tests for helper scripts
-          Invoke-Tests.ps1 ← dependency-free runner (PS 5.1+ / PS 7+)
-          *.Tests.ps1      ← test cases — executed by `validate`
 
 .claude/skills/            ← project layer, committed to the project repo
   project-config.md        ← shared context: namespace, naming, system ID
@@ -108,25 +104,9 @@ without the full submodule setup.
 **Manual update procedure** (no automation):
 
 1. Re-download the latest core.
-2. For each skill, replace `SKILL.md`, `references/`, `CONFIG_TEMPLATE.md`,
-   and `scripts/` (if present).
+2. For each skill, replace `SKILL.md`, `references/`, and `CONFIG_TEMPLATE.md` (if present).
 3. Do **not** overwrite `configs/` — that is project state.
 4. Run `abap-skill-manager validate` afterwards.
-
-**Important — abap-vs-reader script path:**
-
-In submodule mode the script lives at
-`.claude/skills-core/skills/abap-vs-reader/scripts/open-abap.ps1`.
-In manual mode it is copied into the skill folder, so the path becomes
-`.claude/skills/abap-vs-reader/scripts/open-abap.ps1`.
-
-After switching to manual mode, any file that hardcodes the submodule path
-must be updated: search
-`skills-core/skills/abap-vs-reader/scripts` and replace with
-`skills/abap-vs-reader/scripts`. Typical targets are
-`$SKILLS_PATH/abap-vs-reader/SKILL.md` (if a wrapper or copied core exists)
-and any `configs/*.md` that records the script path. If the file is absent,
-run `abap-skill-manager init` to regenerate the wrapper before patching.
 
 **Trade-off vs submodule:**
 
