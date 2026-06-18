@@ -60,9 +60,9 @@ allowed frameworks, FRIENDS policy, EML mode, etc.
 
 ### Step 2 — Obtain the source
 
-Use pasted source if provided. Otherwise read `references/source-reader.md`
-and follow the detection chain. Do not proceed without the actual
-implementation source.
+Use pasted source if provided. Otherwise collect the implementation source
+and the minimum related context before proceeding. Do not prescribe a
+retrieval chain. Do not proceed without the actual implementation source.
 
 ### Step 3 — Inspect the source
 

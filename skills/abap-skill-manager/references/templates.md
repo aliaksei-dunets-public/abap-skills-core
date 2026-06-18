@@ -84,7 +84,4 @@ Primary namespace: TODO — e.g. /DEMO/
 
 ## Service Binding
 Pattern: UI_*_O2 / UI_*_O4 / API_*_O4
-
-## Source Reader
-source_reader: auto   # auto | abap-vs-reader | mcp | ask
 ```

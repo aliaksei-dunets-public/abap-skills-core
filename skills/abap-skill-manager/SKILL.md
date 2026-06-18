@@ -168,12 +168,6 @@ Verify required config fields and run skill self-tests.
      contains `TODO`, report WARNING: "description in wrapper
      `<skill-name>/SKILL.md` was not copied from core. Run
      `abap-skill-manager init` to regenerate or fill it in manually."
-   - `## Source Reader` → `source_reader`:
-     - Absent → WARNING: "source_reader not set; defaulting to auto. Add
-       `source_reader: auto` under `## Source Reader` to suppress."
-     - Value not in `{auto, abap-vs-reader, mcp, ask}` → ERROR:
-       "source_reader has unknown value '<value>'. Allowed: auto |
-       abap-vs-reader | mcp | ask."
 
 2. **CONFIG_TEMPLATE list:**
    - Submodule → `$CORE_PATH/skills/<skill>/CONFIG_TEMPLATE.md`.

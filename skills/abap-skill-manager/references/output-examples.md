@@ -69,7 +69,6 @@ project-config.md: ✓  (TODOs: 0)
 
 ### project-config.md
 ✓ primary_namespace: /DEMO/
-✓ source_reader: auto
 ✗ system — still contains TODO
 
 ### abap-code-review/configs/

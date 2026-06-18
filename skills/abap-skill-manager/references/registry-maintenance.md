@@ -65,6 +65,18 @@ For those cases, update `abap-skill-manager` only if one of these is true:
 
 ---
 
+## Source Evidence Convention
+
+When creating or updating skills, enforce this architecture rule:
+
+- skills may declare which source and related context they need
+- skills must not prescribe retrieval chains, tool probe order, or platform-specific fallback flows
+- missing evidence should be handled by one scoped unblock question, a verification-gap note, or an explicit stop
+
+Treat new procedural source-reading logic in a skill as a maintenance issue and remove it before finishing the update.
+
+---
+
 ## Checklist (apply for every skill change)
 
 - [ ] `init` summary table updated

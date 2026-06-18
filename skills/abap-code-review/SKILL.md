@@ -55,14 +55,14 @@ Examine the conversation to determine which mode applies. Check modes in the ord
 
 **Mode A — Paste:** A code block containing ABAP, CDS, or BDEF source is present anywhere in the conversation (current or prior turns). Source is already available — proceed directly to Phase 3. Use the object name from the `CLASS`/`INTERFACE`/`DEFINE` statement as the report header, or `INLINE` if it cannot be determined.
 
-**Mode B — Single ADT Object:** `$ARGUMENTS` contains a single token that is **not** a transport request number (see format below) and **not** a package name. Read `references/source-reader.md` and follow the detection chain to fetch the source. If no source is obtained, note `[SOURCE NOT FOUND]` in the report and continue.
+**Mode B — Single ADT Object:** `$ARGUMENTS` contains a single token that is **not** a transport request number (see format below) and **not** a package name. Collect the object's source before continuing. If no source is obtained, note `[SOURCE NOT FOUND]` in the report and continue.
 
 **Mode C — Transport / Package / Object Set:** `$ARGUMENTS` matches one of:
 - A transport request number — format `<3-char SID>K<6-digit number>`, e.g. `DEVK900123`
 - A comma-separated list of two or more object names
 - A single package name (identifiable by the project namespace prefix from config, e.g. `/DEMO/MY_PACKAGE`)
 
-For a transport or object list: read `references/source-reader.md` and follow the detection chain for each object sequentially. For a package: do the same for each reviewable object in the package. Collect all sources before proceeding to Phase 2. For any object not found, note `[SOURCE NOT FOUND]` in its section. Produce one consolidated report.
+For a transport or object list: collect the source for each object sequentially. For a package: do the same for each reviewable object in the package. Collect all sources before proceeding to Phase 2. For any object not found, note `[SOURCE NOT FOUND]` in its section. Produce one consolidated report.
 
 **No match:** If none of the above applies — no paste in conversation, no recognisable `$ARGUMENTS` — ask exactly one scoping question before proceeding. See `references/review-scope-playbook.md` for guidance on scoping decisions and evidence standards.
 
@@ -84,6 +84,8 @@ For each object, collect actual evidence before reporting findings:
 - changed logic paths when the review targets a transport, task, or change set
 - related tests when changed logic should be covered
 - syntax, ABAP Unit, ATC, references, or dependency evidence when available
+
+Use the evidence available in the current environment. Do not prescribe a retrieval chain.
 
 If a required artifact cannot be read or a check cannot be executed, record a `verification gap` instead of guessing.
 

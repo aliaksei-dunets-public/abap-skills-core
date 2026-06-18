@@ -122,24 +122,9 @@ Wait for the user's response. Use the confirmed name as `<FeatureName>` for the 
 
 ## Phase 3 — READ SOURCES
 
-Read `references/source-reader.md` and follow the detection chain for each object in sort order.
+Collect source for each object in sort order before documenting it. Do not prescribe a retrieval chain.
 
-**On cache miss** (abap-vs-reader returns MISSING):
-
-Construct the ADT virtual path using the type → URI type-label and filename mapping from `.claude/skills-core/skills/abap-vs-reader/SKILL.md` (Step 2.3.5). Then display:
-
-```
-⚠ Object not found in ADT cache: <OBJECT_NAME> (<TYPE>)
-
-Please open it in VS Code using this ADT path:
-  /repotree-v1/<SYSTEM_ID>/<ROOT_SEGMENT>/<TOP_PACKAGE>/.../<TYPE_LABEL>/<OBJECT_NAME>
-
-Or click its node in the ADT Project Explorer tree.
-
-Send any message when the file is open.
-```
-
-After user responds → retry read once. If still missing → mark the object with `⚠ source unavailable` in Phase 4 tables. Continue with next object.
+If a required source cannot be obtained after one scoped unblock attempt, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
 
 **READ order within types:**
 
