@@ -12,7 +12,18 @@ Use exactly three severity levels across all confirmed findings:
 
 ## Per-Object Findings Table
 
-Use this exact structure for each reviewed object:
+Use this exact structure for each reviewed object. For global ABAP classes the report MUST include a dedicated `## Local Classes / Includes` section (see below) before the Release Gate verdict line.
+
+### Section order inside a per-class report
+
+1. Header (object type, package, reviewer, date, active categories)
+2. Global findings table (findings on the global class itself)
+3. **`## Local Classes / Includes`** — mandatory for global classes; see structure below
+4. Architectural suspicions / review leads (optional)
+5. Verification gaps
+6. Release Gate verdict line
+
+### Findings table format
 
 ```
 ---
@@ -37,6 +48,53 @@ Rules:
 - If the object is fully clean: write `✓ No findings from collected evidence.`
 
 Only confirmed findings belong in this table. Do not place hypotheses, weak signals, or missing-evidence notes here.
+
+## Local Classes / Includes (mandatory for global classes)
+
+Every review of a global ABAP class must include a `## Local Classes / Includes` section that documents what was read in `*.clas.definitions.abap` and `*.clas.implementations.abap`. Place the section immediately before the Verification gaps / Release Gate block.
+
+### Structure
+
+```
+---
+
+## Local Classes / Includes
+
+**Includes read:** `*.clas.definitions.abap` (N lines), `*.clas.implementations.abap` (N lines), `*.clas.macros.abap` (empty / N lines).
+
+**Local classes inventoried:**
+
+- `lcl_<name>` — short purpose, visibility (`CREATE PRIVATE FRIENDS …` / `INHERITING FROM …`), key methods
+- `lcx_<name>` — local exception, parent class
+- `lhc_<entity>` — RAP handler (when applicable), redefined methods listed
+- `lsc_<entity>` — RAP saver (when applicable), redefined methods listed
+
+### Local-class findings
+
+| Severity | Category | Location | Rule ID | Finding & Suggested Fix |
+|----------|----------|----------|---------|------------------------|
+| CRITICAL | ARCH | `lcl_processor->reset` | LOC-ARCH-01 | Method body is empty; the saver's `cleanup_finalize` calls it expecting a reset. Implement `CLEAR queue. CLEAR mo_instance.`. |
+| WARNING  | PERF | `lcl_cache->lookup`    | LOC-PERF-01 | Linear search over STANDARD TABLE. Convert to HASHED TABLE keyed by lookup field. |
+```
+
+### Rules
+
+- Use the prefix `LOC-<CAT>-NN` for local-class rule IDs (e.g. `LOC-ARCH-01`, `LOC-RAP-03`, `LOC-CLEAN-02`) so they are visually separated from the global class's `ARCH-01`, `RAP-03`, etc.
+- The `Location` column must point to the local class and method (e.g. `lcl_processor->queue_header`, `lhc_Header~Activate`).
+- All severity, sort, and wording rules from the global findings table apply.
+- If the includes are empty stubs, write a short stub paragraph instead of the table:
+  > `## Local Classes / Includes` — `*.clas.definitions.abap` and `*.clas.implementations.abap` are empty stubs. No additional findings.
+- If the includes could not be read, do **not** write the stub paragraph; record a verification gap instead.
+- The Release Gate verdict at the end of the report must consider local-class findings together with global findings. CRITICAL findings inside locals are blockers in the same way as CRITICAL findings on the global class.
+
+### Special case — Behavior Pools (`*.clas.abap = FOR BEHAVIOR OF …`)
+
+The global wrapper is empty by RAP convention; the entire RAP behavior (`lhc_*`, `lsc_*`, helper `lcl_*`) lives in `*.clas.implementations.abap`. For a behavior pool:
+
+- The Findings Table at section #2 will normally be empty or contain only the documentation finding *"wrapper has no class-level ABAP-Doc describing the included handlers"*.
+- The substance of the review lives in the `## Local Classes / Includes` section.
+- The Release Gate verdict is driven entirely by local-class findings.
+- **Never** conclude *"BP is empty, all logic lives elsewhere"* without having read the implementations include first — that conclusion is a verification gap, not a finding.
 
 ## Consolidated Summary (multiple objects only)
 

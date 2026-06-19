@@ -12,12 +12,18 @@ Collect:
 
 - the named object
 - related includes or implementation parts
+- **for global ABAP classes — all sibling includes are mandatory:**
+  - `*.clas.definitions.abap` (local type pool + local class `DEFINITION`s)
+  - `*.clas.implementations.abap` (local class `IMPLEMENTATION`s; for RAP behavior pools this is where the entire `lhc_*` / `lsc_*` handler logic lives — the `*.clas.abap` wrapper is empty by convention and reading only the wrapper produces wrong verdicts)
+  - `*.clas.macros.abap` (when present)
+  - `*.clas.testclasses.abap` (when `TEST` is active)
 - related local test classes or test includes when present
 - nearby referenced artifacts when they are required to validate behavior, impact, released API status, or business flow consistency
 
 Inspect:
 
 - active source
+- all four sibling includes for global classes (see above)
 - changed logic paths
 - tests that protect the changed behavior
 - the smallest set of related objects needed to understand the contract

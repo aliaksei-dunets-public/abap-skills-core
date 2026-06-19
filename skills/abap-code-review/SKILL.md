@@ -74,6 +74,14 @@ Before judging any object, read `references/review-scope-playbook.md` and collec
 - local tests or test includes when present
 - nearby dependencies, callers, contracts, CDS/BDEF/BIMP artifacts, or interfaces when they are required to explain purpose, behavior, impact, or released API status
 
+**Mandatory for global ABAP classes — local-class includes:** When reviewing a global class (`*.clas.abap`) you **must** also read its sibling includes before producing the report:
+
+- `*.clas.definitions.abap` — local type pool, local class `DEFINITION` blocks (`lcl_*`, `lcx_*`, RAP `lhc_*` / `lsc_*` declarations).
+- `*.clas.implementations.abap` — local class `IMPLEMENTATION` blocks. **For RAP behavior pools (`FOR BEHAVIOR OF …`) the entire handler logic lives here**; the wrapper `*.clas.abap` is empty by convention. Treating the wrapper as "the class" produces incorrect verdicts.
+- `*.clas.macros.abap` — local macro definitions when present.
+
+If an include is empty or absent, record it as such and continue. If an include cannot be read (virtual filesystem, ADT cache miss, missing authorization), record a verification gap rather than skipping silently.
+
 Do not expand into broad repository exploration. Pull only the artifacts needed to support a finding or to explain a verification gap.
 
 ## Phase 3 — Collect Evidence
@@ -81,13 +89,14 @@ Do not expand into broad repository exploration. Pull only the artifacts needed 
 For each object, collect actual evidence before reporting findings:
 
 - active source
+- **for global classes: all four sibling includes** (`*.clas.definitions.abap`, `*.clas.implementations.abap`, `*.clas.macros.abap`, plus `*.clas.testclasses.abap` when `TEST` is active)
 - changed logic paths when the review targets a transport, task, or change set
 - related tests when changed logic should be covered
 - syntax, ABAP Unit, ATC, references, or dependency evidence when available
 
 Use the evidence available in the current environment. Do not prescribe a retrieval chain.
 
-If a required artifact cannot be read or a check cannot be executed, record a `verification gap` instead of guessing.
+If a required artifact cannot be read or a check cannot be executed, record a `verification gap` instead of guessing. **Reading only `*.clas.abap` for a class with non-empty includes is a verification gap, not a clean review** — explicitly state which includes were read, which were skipped, and why.
 
 ## Phase 4 — Architecture-First Analysis
 
