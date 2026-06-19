@@ -17,6 +17,22 @@ Always use virtual URIs. If a file cannot be found, ask the user to open the obj
 - Read `configs/system.md` (required: `system_id`, `virtual_root_segment`, `virtual_top_package`; optional: `virtual_default_subpackage_chain`, `virtual_known_subpackages`) and `project-config.md` (required: `primary_namespace`). See `CONFIG_TEMPLATE.md` for format.
 - If input is bare (no `(NS)`/`/NS/`) and `Z*`/`Y*`, keep bare; otherwise prepend `primary_namespace`. If missing, ask the user.
 
+## Phase 0.5 — Index lookup (write-through cache)
+
+Index file: `configs/abap-class-index.json` — array of `{ "name", "type", "uri" }`.
+
+1. Normalize `input_path` to display form `<DISPLAY_NAME>` using Phase 1.1 rules.
+2. Grep `configs/abap-class-index.json` for `"name": "<DISPLAY_NAME>"`.
+3. **Hit** → extract `uri` → skip to Step 1.3 (read_file).
+   - If Step 1.3 returns ENOENT: remove that entry from the index, save the file, then fall through to Phase 1 normally.
+4. **Miss** → continue to Phase 1 normally.
+
+After a successful `read_file` (Phase 1 path only — not a cache hit), write back to the index **if no entry for this name exists yet**:
+```json
+{ "name": "<DISPLAY_NAME>", "type": "<CLAS|INTF|BDEF|…>", "uri": "<uri that worked>" }
+```
+Append to the array and save `configs/abap-class-index.json`.
+
 ## Phase 1 — Virtual URI
 
 ### Step 1.1 — Normalize to display form `<DISPLAY_NAME>`
