@@ -52,6 +52,16 @@ Notes:
   Example: `suppress_severities: [INFO, WARNING]`
   Use to focus the report on blockers only.
 
+## Output Mode
+
+- `output_mode` — Where to deliver the review output. Skips the Phase 2.5 question when set.
+  Allowed values: `chat`, `file`, `both`.
+  Example: `output_mode: file`
+  - `chat` — print the full report in the conversation; no file is written.
+  - `file` — write the full report to `docs/code-reviews/…` (one file per object plus `_summary.md` for multi-object reviews); reply in chat with a short summary only. Recommended for transports / packages / ≥ 5 objects.
+  - `both` — print in chat **and** write to file (legacy default).
+  When unset, the skill recommends a mode based on review size and asks the user to confirm.
+
 ## Lazy Loading
 
 `config.md` is the required entry point. Use `→ Read configs/naming.md for ...` to link additional files.

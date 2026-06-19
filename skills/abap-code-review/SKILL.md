@@ -66,6 +66,27 @@ For a transport or object list: collect the source for each object sequentially.
 
 **No match:** If none of the above applies — no paste in conversation, no recognisable `$ARGUMENTS` — ask exactly one scoping question before proceeding. See `references/review-scope-playbook.md` for guidance on scoping decisions and evidence standards.
 
+## Phase 2.5 — Choose Output Mode
+
+Before collecting evidence, ask the user how the review output should be delivered. Ask exactly one question with three options:
+
+> **"How should I deliver the review?"**
+>
+> 1. **Chat only** — print the full report in the conversation; no file is written.
+> 2. **File only** — write the full report to `docs/code-reviews/…` and reply with a short summary (objects reviewed, verdict tally, file paths). Use this for large reviews (transports, packages, ≥5 objects) to avoid flooding the chat.
+> 3. **Both** — print in chat **and** write to file. This is the legacy default.
+
+Apply these defaults to pick the recommended option but always honor the user's choice:
+
+- Mode A (Paste) or single object — recommend **Chat only**.
+- Mode B (Single ADT object) — recommend **Both**.
+- Mode C (Transport / Package / Object Set) with ≥ 5 objects — recommend **File only**.
+- Mode C with < 5 objects — recommend **Both**.
+
+If `configs/config.md` defines `output_mode: chat | file | both`, skip the question and use the configured value. The user can still override the configured value in their request ("output to chat", "save to file only").
+
+Record the chosen mode and use it consistently in Phase 6 and Phase 7. **Never** silently change the output destination after the user has chosen.
+
 ---
 
 Before judging any object, read `references/review-scope-playbook.md` and collect the minimum related context needed to understand behavior:
@@ -142,19 +163,39 @@ Use rule files to validate and sharpen the architecture-first review. Do not let
 
 Read `references/reporting-format.md` for the exact output structure, severity scale, findings table template, optional sections, release gate verdict format, and consolidated summary format.
 
+## Phase 7 — Deliver the Report
+
+Deliver the report according to the **output mode chosen in Phase 2.5**:
+
+### Mode `chat`
+
+Print the complete report in the conversation. Do **not** ask about saving and do **not** create any file. End the turn.
+
+### Mode `file`
+
+Do not print the full report in chat. Instead:
+
+1. Determine the current datetime in `YYYY-MM-DD_HH-MM` format.
+2. Derive the descriptive filename / folder layout:
+   - **Single object** — file `docs/code-reviews/<YYYY-MM-DD_HH-MM>_<kebab-object-name>.md`.
+   - **Transport / package / multi-object review** — a dedicated folder `docs/code-reviews/<TR-number-or-label>/` containing one file per reviewed object (kebab-case object name) plus `_summary.md` with the consolidated table and overall verdict. Use this layout whenever the review covers more than one object so each object's report stays focused and individually addressable.
+   - **Pasted code / no name** — `docs/code-reviews/<YYYY-MM-DD_HH-MM>_inline-review.md`.
+3. Create the target folder if it does not exist.
+4. Write the complete report to file(s).
+5. Reply in chat with a short summary only:
+   - objects reviewed (count + names)
+   - verdict tally (🟢 / 🟡 / 🔴 counts)
+   - top 3 highest-severity themes (one line each)
+   - the file paths created
+
+### Mode `both`
+
+Print the complete report in chat first, then write the same content to file using the layout described under Mode `file`. Confirm the file path(s) at the end.
+
 ---
 
-## Phase 7 — Save Report
+### Notes
 
-After producing the full output in chat, ask the user: **"Save the report to `docs/code-reviews/`?"**
-
-If yes:
-1. Determine the current datetime in `YYYY-MM-DD_HH-MM` format.
-2. Derive a descriptive filename:
-   - Single object: kebab-case of the object name (e.g. `bp-i-con-ip` from `(DEMO)BP_I_CON_IP`)
-   - Multiple objects / transport: TR number or user-supplied label from `$ARGUMENTS` (e.g. `transport-XYZK9A05GC`)
-   - Pasted code / no name: `inline-review`
-3. Create `docs/code-reviews/` if it does not exist.
-4. Write the complete report (identical to the chat output) to:
-   `docs/code-reviews/<YYYY-MM-DD_HH-MM>_<descriptive-name>.md`
-5. Confirm: `Report saved: docs/code-reviews/2026-05-13_14-30_bp-i-con-ip.md`
+- The report content is identical across modes — only the delivery channel differs.
+- For multi-object reviews, the per-object file layout (one file per object + `_summary.md`) is preferred even in `chat` mode if the user later asks to save: keep the structure consistent.
+- If a write fails, fall back to `chat` mode and report the error so the user does not lose the analysis.
