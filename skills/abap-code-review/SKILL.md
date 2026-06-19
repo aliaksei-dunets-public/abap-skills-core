@@ -16,6 +16,8 @@ optional architecture leads, optional suggested tests, and a release gate verdic
 
 This skill is assessment-only. It does not implement fixes.
 
+**Project-independent:** This skill lives in the shared `abap-skills-core` and must stay project-agnostic. Never hard-code a namespace, package, system ID, transport-number pattern, ADT path layout, or filename convention into this `SKILL.md` or the `references/*.md` files. Every project-specific value is supplied via `configs/config.md` (see `CONFIG_TEMPLATE.md`) and any artifact-fetching is delegated to the `abap-vs-reader` skill (which itself is configured per project). Examples in this file (`/DEMO/`, `DEVK900123`, `(DEMO)BP_I_CON_IP`) are illustrative placeholders — do not infer project rules from them.
+
 ---
 
 ## Phase 1 — Load Config and Resolve Categories
@@ -115,7 +117,18 @@ For each object, collect actual evidence before reporting findings:
 - related tests when changed logic should be covered
 - syntax, ABAP Unit, ATC, references, or dependency evidence when available
 
-Use the evidence available in the current environment. Do not prescribe a retrieval chain.
+### Fetching dependencies — strict order
+
+When the analysis requires a dependency that is not yet in scope (a referenced class, interface, BDEF, CDS, structure, data element, parent exception, secondary include, etc.), follow this order strictly:
+
+1. **Try standard read tools first** (`read_file` on a virtual ADT URI, `grep_search`, `semantic_search`).
+2. **If the artifact cannot be located or read** — invoke the **`abap-vs-reader`** skill with the artifact's display name or ADT path. The reader owns URI construction, sub-package chain resolution, the index cache, and its own ENOENT fallback (which already includes asking the user to open the object in VS Code so the ADT cache populates). Do not duplicate that logic here — always delegate.
+3. **If `abap-vs-reader` reports it cannot resolve the artifact** (its fallback chain has been exhausted), **then** ask the user for the missing information — either a corrected name / namespace, a paste of the source, or confirmation that the artifact is intentionally out of scope.
+4. **Only after exhausting steps 1–3** record a `verification gap` and continue with the rest of the review. Never silently skip a dependency.
+
+Do **not** ask the user for an artifact before trying steps 1 and 2 — the reader's existing fallback already handles the common "object not yet in ADT cache" case.
+
+Use the evidence available in the current environment. Do not prescribe a retrieval chain beyond what is described above.
 
 If a required artifact cannot be read or a check cannot be executed, record a `verification gap` instead of guessing. **Reading only `*.clas.abap` for a class with non-empty includes is a verification gap, not a clean review** — explicitly state which includes were read, which were skipped, and why.
 

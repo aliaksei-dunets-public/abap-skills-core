@@ -50,7 +50,7 @@ abap:/repotree-v1/<system_id>/<virtual_root_segment>/<virtual_top_package>/<SUB_
 
 - `<SUB_PACKAGE_CHAIN>`: first matching pattern in `virtual_known_subpackages`, else `virtual_default_subpackage_chain`, else empty.
 - Pass spaces and parens **literally** — do not pre-encode. `read_file` URL-encodes internally; pre-encoding produces ENOENT.
-- `<DISPLAY_NAME>`: uppercase. `<filename>` prefix: lowercase display form, e.g. `(hec4)cl_foo.clas.abap`.
+- `<DISPLAY_NAME>`: uppercase. `<filename>` prefix: lowercase display form, e.g. `(demo)cl_foo.clas.abap`.
 - `<TYPE_LABEL>` and `<filename>` suffix → `references/object-types.md`.
 
 ### Step 1.3 — Read

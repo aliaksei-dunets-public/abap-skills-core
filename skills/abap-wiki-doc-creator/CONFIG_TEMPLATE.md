@@ -10,7 +10,7 @@ These fields are read from the shared project config file.
 
 | Field | Format | Description |
 |---|---|---|
-| `primary_namespace` | `(NS)` e.g. `(HEC4)` | Default namespace prepended to bare object names with no prefix. |
+| `primary_namespace` | `(NS)` e.g. `(DEMO)` | Default namespace prepended to bare object names with no prefix. |
 
 ---
 
