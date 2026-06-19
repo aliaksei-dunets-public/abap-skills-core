@@ -16,8 +16,6 @@ optional architecture leads, optional suggested tests, and a release gate verdic
 
 This skill is assessment-only. It does not implement fixes.
 
-**Project-independent:** This skill lives in the shared `abap-skills-core` and must stay project-agnostic. Never hard-code a namespace, package, system ID, transport-number pattern, ADT path layout, or filename convention into this `SKILL.md` or the `references/*.md` files. Every project-specific value is supplied via `configs/config.md` (see `CONFIG_TEMPLATE.md`) and any artifact-fetching is delegated to the `abap-vs-reader` skill (which itself is configured per project). Examples in this file (`/DEMO/`, `DEVK900123`, `(DEMO)BP_I_CON_IP`) are illustrative placeholders — do not infer project rules from them.
-
 ---
 
 ## Phase 1 — Load Config and Resolve Categories
