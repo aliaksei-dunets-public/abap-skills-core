@@ -53,7 +53,7 @@ A category named explicitly in the user's request overrides both config and defa
 
 Examine the conversation to determine which mode applies. Check modes in the order listed — the first match wins.
 
-**Mode A — Paste:** A code block containing ABAP, CDS, or BDEF source is present anywhere in the conversation (current or prior turns). Source is already available — proceed directly to Phase 3. Use the object name from the `CLASS`/`INTERFACE`/`DEFINE` statement as the report header, or `INLINE` if it cannot be determined.
+**Mode A — Paste:** A code block containing ABAP, CDS, or BDEF source is present anywhere in the conversation (current or prior turns). Source is already available — no retrieval needed. Use the object name from the `CLASS`/`INTERFACE`/`DEFINE` statement as the report header, or `INLINE` if it cannot be determined.
 
 **Mode B — Single ADT Object:** `$ARGUMENTS` contains a single token that is **not** a transport request number (see format below) and **not** a package name. Collect the object's source before continuing. If no source is obtained, note `[SOURCE NOT FOUND]` in the report and continue.
 
@@ -66,7 +66,11 @@ For a transport or object list: collect the source for each object sequentially.
 
 **No match:** If none of the above applies — no paste in conversation, no recognisable `$ARGUMENTS` — ask exactly one scoping question before proceeding. See `references/review-scope-playbook.md` for guidance on scoping decisions and evidence standards.
 
+**After resolving the input mode, always continue to Phase 2.5 before collecting any evidence.**
+
 ## Phase 2.5 — Choose Output Mode
+
+**This phase is mandatory and must not be skipped, regardless of input mode.** The only exception: if `configs/config.md` defines `output_mode` with a value of `chat`, `file`, or `both` — in that case use the configured value silently and continue to Phase 3.
 
 Before collecting evidence, ask the user how the review output should be delivered. Ask exactly one question with three options:
 
