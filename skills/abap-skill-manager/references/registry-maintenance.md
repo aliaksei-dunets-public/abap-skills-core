@@ -12,7 +12,7 @@ a `SKILL.md`. Update `skills/abap-skill-manager/references/output-examples.md`
 in four places:
 
 1. **`init` summary table** — add row:
-   `| <skill-name> | created | created | ✓ |`
+   `| <skill-name> | created | generated | ✓ |`
    If the skill has no `CONFIG_TEMPLATE.md`, use `—` in the Config column and
    note "no config required".
 

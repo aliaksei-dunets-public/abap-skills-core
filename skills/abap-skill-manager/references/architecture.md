@@ -15,7 +15,7 @@ abap-skills-core/          ← git submodule, shared across all projects
       CONFIG_TEMPLATE.md   ← documents required/recommended config fields
       references/          ← supporting reference files
 
-.claude/skills/            ← project layer, committed to the project repo
+.agents/skills/            ← project layer, committed to the project repo
   project-config.md        ← shared context: namespace, naming, system ID
   <skill-name>/
     SKILL.md               ← wrapper: reads core + project-config + config
@@ -44,25 +44,26 @@ prescribe retrieval chains. The agent runtime resolves source acquisition.
 **Setup:**
 
 ```bash
-# Step 1 — Add submodule (Claude Code)
-git submodule add https://github.com/aliaksei-dunets-public/abap-skills-core.git .claude/skills-core
+# Step 1 — Add submodule
+git submodule add https://github.com/aliaksei-dunets-public/abap-skills-core.git .agents/skills-core
 git submodule update --init
 ```
 
 > If git rejects due to `.gitignore`, use `-f` and add these exclusions:
 > ```
-> !.claude/skills-core/
-> !.claude/skills-core/**
-> !.claude/skills/
-> !.claude/skills/**
+> !.agents/skills-core/
+> !.agents/skills-core/**
+> !.agents/skills/
+> !.agents/skills/**
 > ```
 
 ```
-# Step 2 — Bootstrap wrappers and config stubs
+# Step 2 — Bootstrap wrappers and config files
 abap-skill-manager init
 
 # Step 3 — Fill in project-config.md and each configs/config.md
-# See each skill's CONFIG_TEMPLATE.md for required fields
+# (config.md files are pre-generated with TODO markers — edit them)
+# See each skill's CONFIG_TEMPLATE.md for field descriptions
 abap-skill-manager validate
 ```
 
@@ -70,8 +71,9 @@ abap-skill-manager validate
 ```
 abap-skill-manager update
 ```
-Pulls the latest core, creates wrappers for any newly added skills, and
-updates the submodule pointer.
+Pulls the latest core, creates wrappers for any newly added skills, appends
+missing config fields to existing `config.md` files, and updates the
+submodule pointer.
 
 ---
 
@@ -81,7 +83,7 @@ Use when git submodules are not practical or when you want a single skill
 without the full submodule setup.
 
 ```
-.claude/skills/            ← project layer, committed to the project repo
+.agents/skills/            ← project layer, committed to the project repo
   project-config.md        ← shared context
   <skill-name>/
     SKILL.md               ← core logic copied directly (no wrapper)
@@ -96,9 +98,10 @@ without the full submodule setup.
 
 1. Download or clone `https://github.com/aliaksei-dunets-public/abap-skills-core`
 2. Copy the desired skill folder(s) from `skills/<skill-name>/` into
-   `$SKILLS_PATH/<skill-name>/`
-3. Create config stubs: `abap-skill-manager init`
-4. Fill in `project-config.md` and each `configs/config.md`.
+   `.agents/skills/<skill-name>/`
+3. Create config files: `abap-skill-manager init`
+4. Fill in `project-config.md` and each `configs/config.md`
+   (the files are pre-generated with TODO markers — edit them).
 5. Run `abap-skill-manager validate` to check nothing was missed.
 
 **Manual update procedure** (no automation):
@@ -119,9 +122,8 @@ without the full submodule setup.
 
 ---
 
-## Supported Platforms
+## Supported Platform
 
 | Platform | skills-core path | skills path |
 |---|---|---|
-| Claude Code | `.claude/skills-core` | `.claude/skills` |
-| GitHub Copilot Chat | `.agents/skills-core` | `.agents/skills` |
+| GitHub Copilot (Agents) | `.agents/skills-core` | `.agents/skills` |

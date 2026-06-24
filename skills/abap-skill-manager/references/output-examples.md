@@ -11,15 +11,15 @@ diff successive runs.
 | Skill | Wrapper | Config | Action |
 |---|---|---|---|
 | abap-code-review | ✓ | ✓ | skipped (already present) |
-| abap-doc-writer | created | created | ✓ |
-| abap-unit-test-creator | created | created | ✓ |
-| abap-vs-reader | created | created | ✓ |
-| abap-wiki-doc-creator | created | created | ✓ |
+| abap-doc-writer | created | generated | ✓ |
+| abap-unit-test-creator | created | generated | ✓ |
+| abap-vs-reader | created | generated | ✓ |
+| abap-wiki-doc-creator | created | generated | ✓ |
 | abap-skill-manager | ✓ | — | skipped (no config required) |
 
-Follow with: "Fill in `$SKILLS_PATH/project-config.md` and each
-`configs/config.md`. Run `abap-skill-manager validate` to check for missing
-required fields."
+Follow with: "Edit `$SKILLS_PATH/project-config.md` and each
+`configs/config.md` — all TODO markers must be replaced with real values.
+Run `abap-skill-manager validate` to check for missing required fields."
 
 ---
 

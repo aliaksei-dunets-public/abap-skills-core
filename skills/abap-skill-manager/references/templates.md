@@ -27,32 +27,6 @@ Apply core instructions using the project context and all loaded config files.
 
 ---
 
-## Config stub (`configs/config.md`)
-
-Created only when the skill has a `CONFIG_TEMPLATE.md` and no `config.md`
-exists yet. Skills without a `CONFIG_TEMPLATE.md` (e.g. `abap-skill-manager`
-itself) get no `configs/` folder.
-
-Submodule mode:
-
-```markdown
-# <skill-name> — Project Config
-
-TODO — Fill in required fields.
-See $CORE_PATH/skills/<skill-name>/CONFIG_TEMPLATE.md for required fields.
-```
-
-Manual mode (template path lives inside the skill folder):
-
-```markdown
-# <skill-name> — Project Config
-
-TODO — Fill in required fields.
-See $SKILLS_PATH/<skill-name>/CONFIG_TEMPLATE.md for required fields.
-```
-
----
-
 ## `project-config.md` standard template
 
 ```markdown
