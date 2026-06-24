@@ -11,6 +11,7 @@ diff successive runs.
 | Skill | Wrapper | Config | Action |
 |---|---|---|---|
 | abap-code-review | ✓ | ✓ | skipped (already present) |
+| abap-doc-writer | created | created | ✓ |
 | abap-unit-test-creator | created | created | ✓ |
 | abap-vs-reader | created | created | ✓ |
 | abap-wiki-doc-creator | created | created | ✓ |
@@ -33,6 +34,7 @@ Core: <current-SHA>  Remote: <remote-SHA>  [UP TO DATE | BEHIND N commits — ru
 | Skill                  | Wrapper | Config | TODOs | Notes                         |
 |------------------------|---------|--------|-------|-------------------------------|
 | abap-code-review       | ✓       | ✓      | 0     |                               |
+| abap-doc-writer        | ✓       | ✓      | 0     |                               |
 | abap-skill-manager     | ✓       | —      | —     | no config required            |
 | abap-unit-test-creator | ✓       | ✓      | 0     |                               |
 | abap-vs-reader         | ✓       | ✓      | 0     |                               |
@@ -53,6 +55,7 @@ Install mode: manual (no submodule — update via abap-skill-manager update)
 | Skill                  | SKILL.md | Config | TODOs | Notes                         |
 |------------------------|----------|--------|-------|-------------------------------|
 | abap-code-review       | ✓        | ✓      | 0     |                               |
+| abap-doc-writer        | ✓        | ✓      | 0     |                               |
 | abap-unit-test-creator | ✓        | ✓      | 0     |                               |
 | abap-vs-reader         | ✓        | ✓      | 0     |                               |
 | abap-wiki-doc-creator  | ✓        | ✓      | 0     |                               |
@@ -75,6 +78,9 @@ project-config.md: ✓  (TODOs: 0)
 ✓ primary_namespace
 ✓ ddic_naming_rules  (configs/naming.md)
 ✗ auth_check_class_pattern — field missing or TODO
+
+### abap-doc-writer/configs/
+✓ doc_language  (configs/config.md)
 
 ### abap-vs-reader/configs/
 ✓ system_id
