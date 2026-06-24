@@ -89,12 +89,8 @@ ENDMETHOD.
 
 When a test documents a counter-intuitive but currently correct
 implementation fact, name it explicitly and add a star-comment header
-stating which behavior is pinned.
-
-**Use pinning only when fixing the underlying behavior is out of scope for
-this task.** If the bug is fixable in this session, report it as a code
-quality issue instead — a pinned bug actively misleads future developers by
-making wrong behavior look intentional.
+stating which behavior is pinned. Pin only when fixing the behavior is out
+of scope — if it is fixable now, report it as a code quality issue instead.
 
 ```abap
 METHOD get_by_name_keys_on_value.

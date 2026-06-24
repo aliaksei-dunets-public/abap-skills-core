@@ -113,6 +113,20 @@ After all per-object sections, add:
 **Overall transport verdict:** 🔴 NO-GO — resolve all CRITICAL findings before releasing.
 ```
 
+## File Path Conventions
+
+Use when output mode is `file` or `both`. Determine the current datetime in `YYYY-MM-DD_HH-MM` format.
+
+| Review type | Path |
+|---|---|
+| Single object | `docs/code-reviews/<YYYY-MM-DD_HH-MM>_<kebab-object-name>.md` |
+| Transport / package / multi-object | `docs/code-reviews/<TR-number-or-label>/` — one file per object (kebab-case name) + `_summary.md` |
+| Pasted code / no name | `docs/code-reviews/<YYYY-MM-DD_HH-MM>_inline-review.md` |
+
+Create the target folder if it does not exist. The per-object + `_summary.md` layout applies whenever more than one object is reviewed, keeping reports individually addressable.
+
+---
+
 ## Output Order
 
 1. Per-object findings tables and verdict lines

@@ -70,13 +70,6 @@ seams when present. Prefer reporting a blocker over generating fragile tests.
 - Never use productive data.
 - Do not mix SQL and CDS environments unless production really uses both.
 
-## External dependencies
-
-For HTTP, RFC, BAPI, FM, update task, application log, lock, number range,
-authorization, date/time/user, or system context: use existing seam/wrapper/
-provider, otherwise local fake on top of an existing seam, otherwise blocker.
-Never call external systems from unit tests.
-
 ## Testability blockers
 
 Common blockers:
@@ -100,11 +93,6 @@ Affected unit: `<class_or_behavior>` / `<method_or_handler>`
 
 Blocker: The method creates or calls `<dependency>` directly, so the test
 cannot replace it with a fake or test double.
-
-Why this blocks isolated testing:
-- The test would call productive logic or external side effects.
-- The dependency behavior cannot be controlled deterministically.
-- Assertions would depend on runtime state outside the unit under test.
 
 Minimal recommended production change:
 - Introduce `<interface_name>` or a small wrapper around `<dependency>`.

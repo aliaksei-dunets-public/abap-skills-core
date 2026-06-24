@@ -122,13 +122,13 @@ Wait for the user's response. Use the confirmed name as `<FeatureName>` for the 
 
 ## Phase 3 — READ SOURCES
 
-Collect source for each object in sort order before documenting it. Do not prescribe a retrieval chain.
+Collect source for each object in sort order before documenting it. For each object invoke the **`abap-vs-reader`** skill to read source via virtual URI.
 
-If a required source cannot be obtained after one scoped unblock attempt, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
+If a required source cannot be obtained after the reader's fallback chain is exhausted, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
 
 **READ order within types:**
 
-For classes (CLAS): read `.clas.abap` first (main body), then `.clas.implementations.abap`, then `.clas.definitions.abap`. Skip `.clas.testclasses.abap` — test code is not documented in wiki.
+For classes (CLAS): invoke `abap-vs-reader` for `.clas.abap` first. Once the URI is known, read `.clas.implementations.abap` and `.clas.definitions.abap` directly with `read_file` by substituting the filename suffix — no need to invoke `abap-vs-reader` again for sibling includes. Skip `.clas.testclasses.abap` — test code is not documented in wiki.
 
 For BDEF: read the single `.asbdef` file.
 

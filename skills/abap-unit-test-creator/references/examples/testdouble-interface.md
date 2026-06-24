@@ -1,11 +1,8 @@
 # Example: Interface Test Double with `cl_abap_testdouble`
 
-Dynamic test double for any interface — no hand-coded fake class. Use when
-declarative stub/spy/interaction-verification is needed and the interface is
-large or the test must verify call counts, arguments, or injected
-exceptions. Prefer a hand-written `ltd_*` fake when only one or two methods
-are exercised, when state must be accumulated explicitly, or when complex
-call sequences are clearer in code.
+Dynamic test double for any interface — no hand-coded fake class. Choose
+between `cl_abap_testdouble` and a hand-written `ltd_*` using the table
+below.
 
 ## When to use vs. local fake
 

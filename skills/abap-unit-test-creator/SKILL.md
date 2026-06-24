@@ -2,12 +2,11 @@
 name: abap-unit-test-creator
 description: >
   Use whenever the user wants to write, generate, extend, or fix ABAP Unit
-  tests — for ABAP classes, local classes, RAP handlers, validations,
-  determinations, savers, or any ABAP Cloud / S/4HANA behavior implementation.
-  Trigger on phrases like "write a test", "add unit test", "cover this method",
-  "isolate SQL", "mock this interface", "test this RAP behavior", "improve test
-  coverage". Also trigger when the user pastes ABAP source and asks how to test
-  it, even without explicit "unit test" wording.
+  tests — for ABAP classes, RAP handlers, validations, determinations, savers,
+  or any ABAP Cloud / S/4HANA behavior implementation. Trigger on: "write a
+  test", "add unit test", "cover this method", "isolate SQL", "mock this
+  interface", "test this RAP behavior", "improve test coverage", or when the
+  user pastes ABAP source and asks how to test it.
 ---
 
 # ABAP Unit Test Creator
@@ -60,9 +59,7 @@ allowed frameworks, FRIENDS policy, EML mode, etc.
 
 ### Step 2 — Obtain the source
 
-Use pasted source if provided. Otherwise collect the implementation source
-and the minimum related context before proceeding. Do not prescribe a
-retrieval chain. Do not proceed without the actual implementation source.
+Use pasted source if provided. Otherwise invoke the **`abap-vs-reader`** skill to read the implementation source via virtual URI. Do not proceed without the actual implementation source.
 
 ### Step 3 — Inspect the source
 
