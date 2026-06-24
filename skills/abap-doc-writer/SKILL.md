@@ -9,14 +9,6 @@ description: >
   Never modifies ABAP logic — only inserts or updates "! comment lines.
 ---
 
-# ABAP Doc Writer
-
-Generates and smart-updates `"!` ABAP Doc comment blocks for ABAP classes and
-interfaces. Reads source via `abap-vs-reader`. Writes back to the local
-filesystem file resolved from the virtual URI. Never touches any non-`"!` line.
-
----
-
 ## Phase 1 — Load Config
 
 Read `configs/config.md` if it exists (follow any `→ Read …` references inside it).
@@ -42,9 +34,9 @@ independent of the object/method scope — it only controls whether existing
 descriptions may be rewritten.
 
 **Mode A — Method scope:** `$ARGUMENTS` contains one object name AND one or
-more method names (e.g. "document `add_child_entity` in `/HEC4/CL_UPLD_RAP_ENTITY`",
-or just a bare method name when the class name was established in the immediately preceding turn of the current conversation). Set
-`METHOD_SCOPE` to the list of named methods. Proceed to Phase 3.
+more method names (e.g. "document `add_child_entity` in `/HEC4/CL_UPLD_RAP_ENTITY`"),
+or a bare method name when the class was named in the immediately preceding turn.
+Set `METHOD_SCOPE` to the list of named methods. Proceed to Phase 3.
 
 **Mode B — Single object:** `$ARGUMENTS` is a single ABAP class or interface
 name. Set `METHOD_SCOPE = ALL`. Proceed to Phase 3.
@@ -61,18 +53,15 @@ Wait for the answer. Do not proceed until a name is provided.
 
 Invoke **`abap-vs-reader`** with the object name from Phase 2.
 
-**For global ABAP classes** — once the main `.clas.abap` URI is resolved, read
-sibling includes by substituting the filename suffix (same pattern as
-`abap-code-review`):
+**For global ABAP classes** — once the main `.clas.abap` URI is resolved, read sibling includes:
 
 | Include | Suffix | Purpose |
 |---------|--------|---------|
-| Main definition | `*.clas.abap` | `PUBLIC SECTION`, class header — **primary write target** |
-| Local definitions | `*.clas.definitions.abap` | Additional `DEFINITION` blocks |
-| Implementations | `*.clas.implementations.abap` | Read only — never written; used to infer method purpose if needed |
+| Main definition | `*.clas.abap` | `PUBLIC SECTION`, class header — write target |
+| Local definitions | `*.clas.definitions.abap` | Additional `DEFINITION` blocks — write target |
+| Implementations | `*.clas.implementations.abap` | Read only for context — never written |
 
-Record the **resolved local file path** for each include. These are the write
-targets in Phase 5. If an include is empty or absent, skip it silently.
+Record the resolved local file path for each include (write targets for Phase 5). Skip empty or absent includes silently.
 
 **For interfaces** — read `*.intf.abap` only. This is the single write target.
 
@@ -138,11 +127,8 @@ Apply §11 of the rules: generate a one-block class/interface description above
 
 ## Phase 5 — Write Back & Report
 
-> **CONSTRAINT:** This skill may only insert, replace, or remove lines that
-> start with `"!`. Before writing any file, verify that every pending change
-> touches only `"!` lines. If any change would alter a non-`"!` line, abort
-> the write for that file, report the affected line(s) and their content, and
-> stop. Do not attempt a partial write.
+> **CONSTRAINT:** Only `"!` lines may be inserted, replaced, or removed.
+> If any pending change would alter a non-`"!` line, abort the write, report the affected line(s), and stop.
 
 ### Write back
 

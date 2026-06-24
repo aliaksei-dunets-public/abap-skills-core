@@ -6,11 +6,7 @@ Reference for generating and updating `"!` ABAP Doc comments. Read this file at 
 
 ## 1. Comment Syntax
 
-Every ABAP Doc line starts with `"!` (no space before `!`).
-
-A doc block is one or more consecutive `"!` lines placed **immediately before** a declaration statement — no blank ABAP lines between the block and the declaration.
-
-Empty `"!` lines (just `"!` with no text) are valid and used for visual separation between the free-text description and `@` tag sections.
+`"!` starts every ABAP Doc line (no space before `!`). A block is one or more consecutive `"!` lines placed immediately before a declaration — no blank ABAP lines between block and declaration. Empty `"!` lines are valid for visual separation.
 
 ---
 
@@ -61,8 +57,6 @@ For long exception/class names that exceed the column, the description moves to 
 
 ## 4. Smart Update Rules
 
-Apply these rules for every declaration that already has a `"!` block:
-
 | Situation | Action |
 |-----------|--------|
 | No `"!` block exists | Generate full new block |
@@ -83,21 +77,16 @@ After any structural change (add/remove tags), **recalculate** the `|` alignment
 ## 5. Description Generation Guidelines
 
 When generating a new description (no existing text, or update mode):
-- One sentence maximum for methods; two sentences allowed for class/interface level.
+- One sentence for methods; two sentences for class/interface level.
 - Derive from: method name, parameter names, return type, exception names.
-- Be factual — describe what the signature implies; do not invent behavior.
-- Write in the language configured in `doc_language` (default: EN).
-- Start with a verb in the third person singular present: "Returns …", "Adds …", "Validates …", "Creates …".
+- Write in `doc_language` (default: EN).
+- Start with a verb in third person singular: "Returns …", "Adds …", "Validates …", "Creates …".
 
 ---
 
 ## 6. HTML Formatting Tags (valid in free-text description)
 
-These HTML tags may appear in description text and must be preserved when already present:
-
-`<h1>`, `<h2>`, `<h3>`, `<p>`, `<em>`, `<strong>`, `<ul>`, `<ol>`, `<li>`, `<br>`
-
-Open tags must be closed **before** a `@parameter`/`@raising`/`@exception` section begins.
+`<h1>`, `<h2>`, `<h3>`, `<p>`, `<em>`, `<strong>`, `<ul>`, `<ol>`, `<li>`, `<br>` — preserve when already present. Close all open tags before any `@parameter`/`@raising`/`@exception` section.
 
 ---
 
