@@ -78,8 +78,8 @@ project-config.md: ✓  (TODOs: 0)
 
 ### abap-vs-reader/configs/
 ✓ system_id
-✓ cache_base
-✓ repotree_package_path
+✓ virtual_root_segment
+✓ virtual_top_package
 
 ### abap-wiki-doc-creator/configs/
 ✓ output_path  (configs/config.md)

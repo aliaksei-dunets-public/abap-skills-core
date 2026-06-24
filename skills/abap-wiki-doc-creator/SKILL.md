@@ -124,7 +124,7 @@ Wait for the user's response. Use the confirmed name as `<FeatureName>` for the 
 
 Collect source for each object in sort order before documenting it. For each object invoke the **`abap-vs-reader`** skill to read source via virtual URI.
 
-If a required source cannot be obtained after the reader's fallback chain is exhausted, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
+If `abap-vs-reader` cannot resolve the source via virtual URI, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
 
 **READ order within types:**
 

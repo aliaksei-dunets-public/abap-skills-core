@@ -48,14 +48,14 @@ Check modes in order — first match wins.
 
 **Mode A — Paste:** A code block containing ABAP, CDS, or BDEF source is present in the conversation. Source is already available. Use the object name from the `CLASS`/`INTERFACE`/`DEFINE` statement as the report header, or `INLINE` if indeterminate.
 
-**Mode B — Single ADT Object:** `$ARGUMENTS` is a single token that is not a transport number and not a package name. Invoke **`abap-vs-reader`** to read the source. If the reader exhausts its fallback chain, ask the user to paste the source or confirm to skip — only after explicit confirmation, note `[SOURCE NOT FOUND]` and continue.
+**Mode B — Single ADT Object:** `$ARGUMENTS` is a single token that is not a transport number and not a package name. Invoke **`abap-vs-reader`** to read the source. If `abap-vs-reader` cannot resolve the source via virtual URI, ask the user to paste the source or confirm to skip — only after explicit confirmation, note `[SOURCE NOT FOUND]` and continue.
 
 **Mode C — Transport / Package / Object Set:** `$ARGUMENTS` matches:
 - Transport request number — `<3-char SID>K<6-digit>`, e.g. `DEVK900123`
 - Comma-separated list of two or more object names
 - Package name (identifiable by namespace prefix from config)
 
-Invoke **`abap-vs-reader`** for each object sequentially. When the reader exhausts its fallback chain for an object, ask the user: open the object in VS Code, paste the source, or skip explicitly. Only after explicit confirmation, note `[SOURCE NOT FOUND]`. Collect all sources before proceeding to Phase 3. Produce one consolidated report.
+Invoke **`abap-vs-reader`** for each object sequentially. If `abap-vs-reader` cannot resolve the source via virtual URI for an object, ask the user: open the object in VS Code, paste the source, or skip explicitly. Only after explicit confirmation, note `[SOURCE NOT FOUND]`. Collect all sources before proceeding to Phase 3. Produce one consolidated report.
 
 **No match:** Ask exactly one scoping question. See `references/review-scope-playbook.md`.
 
