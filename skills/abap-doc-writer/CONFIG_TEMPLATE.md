@@ -1,8 +1,8 @@
 # Config Template: abap-doc-writer
 
-## Required in `project-config.md`
+## Optional in `project-config.md`
 
-- Primary namespace (used to infer object names when bare names are provided)
+- Primary namespace — when provided, used to expand bare object names (e.g. `CL_UPLD` → `/HEC4/CL_UPLD`) in Phase 2
 
 ## Optional in `configs/config.md`
 

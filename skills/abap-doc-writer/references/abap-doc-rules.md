@@ -30,6 +30,10 @@ Tag lines: `@parameter`, `@raising`, `@exception` must start **directly after `"
 
 Each parameter / exception name must appear at most once per block.
 
+`CLASS-METHODS` (static methods) follow the same tag and alignment rules as
+instance `METHODS` — use `@parameter`, `@raising`, `@exception` with the same
+alignment formula from §3.
+
 ---
 
 ## 3. Alignment Rule
@@ -152,12 +156,14 @@ Generate only when absent. Never overwrite an existing class/interface-level blo
 
 Template for a new class block:
 ```abap
-"! <Description sentence derived from class name and purpose.>
+"! Manages the upload of RAP entity data.
 CLASS zcl_example DEFINITION
 ```
+(Replace the description text with a sentence derived from the class name and purpose.)
 
 Template for a new interface block:
 ```abap
-"! <Description sentence derived from interface name and purpose.>
+"! Defines the contract for upload service operations.
 INTERFACE zif_example
 ```
+(Replace the description text with a sentence derived from the interface name and purpose.)

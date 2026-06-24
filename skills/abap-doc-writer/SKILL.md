@@ -43,7 +43,7 @@ descriptions may be rewritten.
 
 **Mode A — Method scope:** `$ARGUMENTS` contains one object name AND one or
 more method names (e.g. "document `add_child_entity` in `/HEC4/CL_UPLD_RAP_ENTITY`",
-or just a bare method name with the class already known from context). Set
+or just a bare method name when the class name was established in the immediately preceding turn of the current conversation). Set
 `METHOD_SCOPE` to the list of named methods. Proceed to Phase 3.
 
 **Mode B — Single object:** `$ARGUMENTS` is a single ABAP class or interface
@@ -138,7 +138,16 @@ Apply §11 of the rules: generate a one-block class/interface description above
 
 ## Phase 5 — Write Back & Report
 
+> **CONSTRAINT:** This skill may only insert, replace, or remove lines that
+> start with `"!`. Before writing any file, verify that every pending change
+> touches only `"!` lines. If any change would alter a non-`"!` line, abort
+> the write for that file, report the affected line(s) and their content, and
+> stop. Do not attempt a partial write.
+
 ### Write back
+
+Write back only `*.clas.abap` and `*.clas.definitions.abap` files. Never write
+to `*.clas.implementations.abap` — it was read in Phase 3 for context only.
 
 For each include file that has at least one `[ADDED]` or `[UPDATED]`
 declaration:
