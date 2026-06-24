@@ -80,3 +80,95 @@ If `abap-vs-reader` cannot resolve the source:
 1. Ask the user to confirm the object name or open it in VS Code.
 2. Only after explicit confirmation that the object cannot be found, note
    `[SOURCE NOT FOUND]` and stop — do not proceed to Phase 4.
+
+---
+
+## Phase 4 — Parse & Generate
+
+Read `references/abap-doc-rules.md` before this phase.
+
+### Determine declarations in scope
+
+Scan the source for all declaration statements that ABAP Doc may precede:
+- `METHODS` in `PUBLIC SECTION`, `PROTECTED SECTION`, `PRIVATE SECTION`
+  (all sections unless `document_private: false`, in which case skip `PRIVATE SECTION`)
+- `CONSTANTS`, `DATA`, `TYPES`, `CLASS-DATA`, `CLASS-METHODS` in `PUBLIC SECTION`
+- Interface methods in `INTERFACE` source
+- Identifiers within chained `DATA:` / `TYPES:` blocks (see rules §10)
+
+If `METHOD_SCOPE` is set (Mode A), process only the named methods. For all
+other declarations, report `[OUT OF SCOPE]` — do not modify them.
+
+### For each declaration in scope
+
+1. **Find existing `"!` block** — the consecutive `"!` lines immediately
+   preceding the declaration statement with no intervening non-`"!` lines.
+
+2. **Parse the block** — extract:
+   - Free-text description lines (all `"!` lines before the first `@` tag)
+   - `@parameter`, `@raising`, `@exception` tags: name and description
+   - `{@link ...}` tokens — record their exact position in the block
+   - `<p class="shorttext ...">` paragraphs — record exact content
+
+3. **Parse the method signature** — extract:
+   - All parameter names and their clause (IMPORTING / EXPORTING / CHANGING / RETURNING)
+   - All exceptions (RAISING → `@raising`; EXCEPTIONS → `@exception`)
+
+4. **Apply smart update rules** from `references/abap-doc-rules.md` §4.
+
+5. **Generate description** when needed, following §5 of the rules.
+   Apply line wrapping at `line_wrap` characters.
+   Apply special character escaping from §9 of the rules.
+
+6. **Re-align** the `|` column across all `@parameter`/`@raising`/`@exception`
+   tags in the new block, following §3 of the rules.
+
+7. **Record status** for the report:
+   - `[ADDED]` — declaration had no doc block; new block was generated
+   - `[UPDATED]` — existing block was modified (tags added/removed, description rewritten in update mode)
+   - `[SKIPPED]` — existing block is complete; no changes needed
+
+### Class / interface level doc
+
+Apply §11 of the rules: generate a one-block class/interface description above
+`CLASS ... DEFINITION` or `INTERFACE` if absent. If already present, mark
+`[SKIPPED]` and do not touch it.
+
+---
+
+## Phase 5 — Write Back & Report
+
+### Write back
+
+For each include file that has at least one `[ADDED]` or `[UPDATED]`
+declaration:
+
+1. Take the original source text.
+2. Replace only the `"!` comment lines that were modified — preserve every
+   other line exactly (character-for-character).
+3. Write the full modified source back to the resolved local file path from
+   Phase 3 using the file write tool.
+4. If the write fails, report the error and leave that file unchanged. Do not
+   attempt partial writes.
+
+### Report
+
+Print a summary in chat:
+
+```
+Object:  /HEC4/CL_UPLD_RAP_ENTITY
+Written: C:\...\zcl_example.clas.abap
+
+Methods & declarations:
+  add_child_entity        [ADDED]
+  get_entity_descr        [SKIPPED] — doc already complete
+  constructor             [UPDATED] — added @parameter iv_name
+  lc_helper~do_something  [ADDED]
+  C_MAX_RETRIES (CONST)   [SKIPPED]
+```
+
+If no files were changed (all `[SKIPPED]`), report:
+```
+Object: /HEC4/CL_UPLD_RAP_ENTITY
+No changes — all declarations already have complete ABAP Doc.
+```
