@@ -54,3 +54,29 @@ name. Set `METHOD_SCOPE = ALL`. Proceed to Phase 3.
 > (e.g. `/HEC4/CL_UPLD_RAP_ENTITY`). You can also name specific methods."
 
 Wait for the answer. Do not proceed until a name is provided.
+
+---
+
+## Phase 3 — Fetch Source
+
+Invoke **`abap-vs-reader`** with the object name from Phase 2.
+
+**For global ABAP classes** — once the main `.clas.abap` URI is resolved, read
+sibling includes by substituting the filename suffix (same pattern as
+`abap-code-review`):
+
+| Include | Suffix | Purpose |
+|---------|--------|---------|
+| Main definition | `*.clas.abap` | `PUBLIC SECTION`, class header — **primary write target** |
+| Local definitions | `*.clas.definitions.abap` | Additional `DEFINITION` blocks |
+| Implementations | `*.clas.implementations.abap` | Read only — never written; used to infer method purpose if needed |
+
+Record the **resolved local file path** for each include. These are the write
+targets in Phase 5. If an include is empty or absent, skip it silently.
+
+**For interfaces** — read `*.intf.abap` only. This is the single write target.
+
+If `abap-vs-reader` cannot resolve the source:
+1. Ask the user to confirm the object name or open it in VS Code.
+2. Only after explicit confirmation that the object cannot be found, note
+   `[SOURCE NOT FOUND]` and stop — do not proceed to Phase 4.
