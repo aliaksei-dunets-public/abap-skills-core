@@ -146,7 +146,20 @@ Read `references/reporting-format.md` for: severity scale, findings table templa
 Print the complete report in the conversation. Do not create any file.
 
 ### Mode `file`
-Do not print the full report in chat. Write to file(s) per the path conventions in `references/reporting-format.md`. Reply with a short summary: objects reviewed, verdict tally, top 3 severity themes, file paths created.
+Write the complete report to file(s) per the path conventions in `references/reporting-format.md`. After writing, reply in chat with one line per reviewed object:
+
+```
+File: <filename>
+Verdict: <🟢 GO | 🟡 CONDITIONAL GO | 🔴 NO-GO> — <N> CRITICAL, <N> WARNING.
+```
+
+If there are verification gaps, unresolved dependencies, or objects that could not be read, append a compact block after the verdict line(s):
+
+```
+Gaps: <object or include name> — <one-line reason>
+```
+
+One line per gap. Nothing else in chat.
 
 ### Mode `both`
 Print the complete report in chat, then write to file(s) per the path conventions in `references/reporting-format.md`. Confirm the file path(s) at the end.
