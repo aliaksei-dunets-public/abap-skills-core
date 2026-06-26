@@ -34,7 +34,7 @@ independent of the object/method scope — it only controls whether existing
 descriptions may be rewritten.
 
 **Mode A — Method scope:** `$ARGUMENTS` contains one object name AND one or
-more method names (e.g. "document `add_child_entity` in `/HEC4/CL_UPLD_RAP_ENTITY`"),
+more method names (e.g. "document `add_child_entity` in `/DEMO/CL_UPLD_RAP_ENTITY`"),
 or a bare method name when the class was named in the immediately preceding turn.
 Set `METHOD_SCOPE` to the list of named methods. Proceed to Phase 3.
 
@@ -43,7 +43,7 @@ name. Set `METHOD_SCOPE = ALL`. Proceed to Phase 3.
 
 **No match:** Ask exactly one question:
 > "Please provide the ABAP class or interface name to document
-> (e.g. `/HEC4/CL_UPLD_RAP_ENTITY`). You can also name specific methods."
+> (e.g. `/DEMO/CL_UPLD_RAP_ENTITY`). You can also name specific methods."
 
 Wait for the answer. Do not proceed until a name is provided.
 
@@ -151,7 +151,7 @@ declaration:
 Print a summary in chat:
 
 ```
-Object:  /HEC4/CL_UPLD_RAP_ENTITY
+Object:  /DEMO/CL_UPLD_RAP_ENTITY
 Written: C:\...\zcl_example.clas.abap
 
 Methods & declarations:
@@ -164,6 +164,6 @@ Methods & declarations:
 
 If no files were changed (all `[SKIPPED]`), report:
 ```
-Object: /HEC4/CL_UPLD_RAP_ENTITY
+Object: /DEMO/CL_UPLD_RAP_ENTITY
 No changes — all declarations already have complete ABAP Doc.
 ```

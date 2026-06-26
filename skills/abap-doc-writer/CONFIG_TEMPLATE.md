@@ -2,7 +2,7 @@
 
 ## Optional in `project-config.md`
 
-- Primary namespace — when provided, used to expand bare object names (e.g. `CL_UPLD` → `/HEC4/CL_UPLD`) in Phase 2
+- Primary namespace — when provided, used to expand bare object names (e.g. `CL_UPLD` → `/DEMO/CL_UPLD`) in Phase 2
 
 ## Optional in `configs/config.md`
 
