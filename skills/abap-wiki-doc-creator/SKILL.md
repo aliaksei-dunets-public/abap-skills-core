@@ -9,26 +9,33 @@ description: >
 
 # ABAP Wiki Doc Creator
 
-Generates a self-contained HTML wiki page for an ABAP feature. Collects artifacts
-from one or more sources, lets the user confirm scope, reads source code, and
-produces a styled `.wiki.html` file in the configured output folder.
+Generates a self-contained HTML wiki page for an ABAP feature. Four linear phases:
+
+```
+COLLECT → READ → GENERATE(.wiki.md) → [user review] → SAVE(.wiki.html)
+```
+
+Both output files (`YYYY-MM-DD-<FeatureName>.wiki.md` and `.wiki.html`) are kept in `output_path`.
 
 ---
 
 ## Inputs
 
-Parse `$ARGUMENTS` and the conversation for the following:
+Parse `$ARGUMENTS` and the conversation context freely — no rigid token format required.
+Recognise:
 
 | Input | Detection |
 |---|---|
-| **Package** | Token matching `package:<NAME>` or `pkg:<NAME>` or a bare package name starting with namespace prefix |
-| **Transport Request** | Token matching `TR:<ID>` or format `<3-char>K<6-digit>` e.g. `H01K123456` |
-| **Git ref** | Token matching `git:<ref>` or a git commit hash / branch name |
-| **Object list** | Comma-separated list of two or more ABAP object names |
-| **Previous wiki** | Path ending in `.wiki.html` — triggers UPDATE mode |
-| **Additional instructions** | All remaining free text after source tokens |
+| **Package** | Name starting with namespace prefix, or `package:<NAME>` / `pkg:<NAME>` |
+| **Transport Request** | Format `<3-char>K<6-digit>` e.g. `H01K123456`, or `TR:<ID>` |
+| **Git ref** | `git:<ref>`, commit hash, or branch name |
+| **Object list** | Comma-separated ABAP object names |
+| **Previous wiki** | Path ending in `.wiki.html` or `.wiki.md` — triggers UPDATE mode |
+| **Extra files/docs** | Any other file paths or document references — read before ABAP objects |
+| **FeatureName** | Explicit name in arguments — highest priority |
+| **Additional instructions** | All remaining free text |
 
-If none of the source tokens are detected and no object list is present, ask:
+If no source is detected, ask:
 > "Please provide at least one source: a package name, transport request (e.g. `H01K123456`), git ref (e.g. `git:abc1234`), or a list of object names."
 
 ---
@@ -37,146 +44,150 @@ If none of the source tokens are detected and no object list is present, ask:
 
 Load config:
 1. Read `configs/config.md`. Extract `output_path` (default: `docs/wiki`).
-2. Read `references/object-sort-order.md` — keep in context for Phase 2 and 3.
+2. Read `references/object-sort-order.md` — keep in context for all phases.
 
 Collect objects from each provided source:
 
-### Git ref source
-
-```bash
-git diff --name-only <ref>
-# or for a single commit:
-git show --name-only --format="" <ref>
-```
-
-Filter paths that correspond to ABAP objects (paths containing `.adt/`, `.asddls`, `.asbdef`, `.tabl`, `.prog`, etc.). Extract object names by parsing the path's encoded segment (reverse-apply URL decoding from `references/object-sort-order.md`).
-
 ### Package source
-
 Use `abap-tools` MCP: call the list-package-objects tool with the package name.
-Each returned object has name, type, and package fields.
 
 ### Transport Request source
-
 Use `abap-tools` MCP: call the list-transport-objects tool with the TR number.
-Each returned object has name, type, and package fields.
+
+### Git ref source
+```bash
+git show --name-only --format="" <ref>
+# or for a range:
+git diff --name-only <ref>
+```
+Filter paths containing `.adt/`, `.asddls`, `.asbdef`, `.tabl`, `.prog`, etc.
+Extract object names by parsing the path's encoded segment.
 
 ### Object list source
+Parse the comma-separated names. Infer type from name prefix
+(`ZI_` / `ZR_` / `ZC_` → DDLS, `ZCL_` / `ZBP_` → CLAS, etc.) or ask if ambiguous.
 
-Parse the comma-separated names. Infer type from name prefix (e.g. `ZI_` → DDLS, `ZCL_` / `ZBP_` → CLAS, `ZC_` → DDLS, etc.) or ask the user if ambiguous.
+### Clarification conditions
+
+Ask the user **only** when:
+1. No source is provided at all
+2. A source is ambiguous (e.g. name matches multiple packages)
+3. Collected object count exceeds 100 — report the count and ask whether to narrow scope
+
+In all other cases proceed silently.
+
+### Normalise and deduplicate
+
+1. Map each object to its canonical type code using `references/object-sort-order.md`
+2. Sort by type order number, then alphabetically within type
+3. Deduplicate: same object from multiple sources → one entry, all sources listed
+
+### FeatureName resolution (priority order)
+1. Explicit name from user arguments
+2. Name from existing wiki filename (UPDATE mode)
+3. Auto-derived from main object: root CDS view (`ZI_*` / `ZR_*`) or top-level class, strip namespace prefix
 
 ### UPDATE mode
+Triggered automatically when a `.wiki.html` or `.wiki.md` path is in arguments.
+See UPDATE MODE section at the end of this skill.
 
-When a previous wiki path is provided:
-1. Read the existing wiki file.
-2. Parse the *Development Artifacts (Full List)* table to extract the previous object list.
-3. Run COLLECT on new sources to get the updated object list.
-4. Diff old vs new: tag each object as `added`, `removed`, or `unchanged`.
-5. In Phase 3, only read sources for `added` objects (and flag `removed` ones in the table).
-6. In Phase 4, regenerate only sections that reference changed objects; copy unchanged sections verbatim from the previous wiki.
-
-### Normalize and deduplicate
-
-Apply sort order from `references/object-sort-order.md`:
-1. Map each object to its canonical type code (DDLS, BDEF, CLAS, TABL, …).
-2. Sort by type order number, then alphabetically within the same type.
-3. Deduplicate: if the same object appears in multiple sources, merge into one entry with all sources listed.
-
-Output: unified list `{ #, name, type, package, source }`.
-
-If the unified list is empty after deduplication, display:
+If the unified list is empty after collection, display:
 > "No ABAP objects found in the provided source(s). Please provide a different source or a manual comma-separated object list."
-And stop — do not proceed to Phase 2.
+And stop.
 
 ---
 
-## Phase 2 — SHOW LIST
+## Phase 2 — READ
 
-Display the unified object list as a table:
+### Read order
+1. **Extra files and documents first** — they provide business/functional context that informs interpretation of all ABAP source
+2. **ABAP objects** in sort order from `references/object-sort-order.md`
+
+### Per-object read rules
+
+| Type | What to read |
+|---|---|
+| DDLS | `.asddls` |
+| DDLX | `.asddlxex` |
+| BDEF | `.asbdef` |
+| SRVD | `.assrvds` |
+| SRVB | XML metadata only — no source read; list in artifacts table as `(XML metadata only)` |
+| INTF | `.intf.abap` |
+| CLAS | `.clas.abap` + `.clas.implementations.abap` + `.clas.definitions.abap` + `.clas.testclasses.abap` |
+| TABL | `.tabl` |
+| STRU | `.stru` |
+| AUTH | `.auth` |
+| ENQU | `.enqu` |
+| DTEL | `.dtel` |
+| DOMA | `.doma` |
+| MSAG | `.prog.msag` |
+
+For CLAS: invoke `abap-vs-reader` for `.clas.abap` first to resolve the virtual URI.
+Once the URI is known, read `.clas.implementations.abap`, `.clas.definitions.abap`, and
+`.clas.testclasses.abap` directly by substituting the filename suffix.
+
+**Test classes contain valuable behaviour information and must not be skipped.**
+
+### Fallback chain — no object is ever skipped
 
 ```
-Found <N> objects. Please confirm the scope:
+1. Direct read_file via virtual URI
+        ↓ fails
+2. Invoke abap-vs-reader skill
+        ↓ fails
+3. Ask user for help:
+   - Open the file manually in their editor
+   - Provide the path in their virtual workspace
+   - Paste the source content directly
+   - Any other means available to them
 
-  #  | Type | Name                        | Package    | Source
-  ---|------|-----------------------------|------------|--------
-   1 | DDLS | ZI_SalesOrder               | ZSALES     | package
-   2 | DDLS | ZC_SalesOrder               | ZSALES     | package
-   3 | CLAS | ZCL_SO_Validator            | ZSALES     | TR:H01K123456
-  ...
-
-Commands:
-  ok                    — confirm and proceed
-  exclude <nums>        — remove objects, e.g. "exclude 4,7"
-  note <num>: <text>    — add annotation to an object, e.g. "note 3: main validator"
+   → Wait for user response before continuing.
+   → Do NOT proceed to GENERATE until all objects are resolved.
 ```
 
-Wait for the user's response before proceeding.
-
-After confirmation, if `FeatureName` was not supplied in `$ARGUMENTS`, propose one based on the main object (e.g. the root CDS view or the top-level class):
-
-> "Suggested feature name: `SalesOrder`. This will be used in the output filename. Accept or provide a different name?"
-
-Wait for the user's response. Use the confirmed name as `<FeatureName>` for the output file.
-
 ---
 
-## Phase 3 — READ SOURCES
+## Phase 3 — GENERATE
 
-Collect source for each object in sort order before documenting it. For each object invoke the **`abap-vs-reader`** skill to read source via virtual URI.
-
-If `abap-vs-reader` cannot resolve the source via virtual URI, mark the object with `⚠ source unavailable` in Phase 4 tables and continue with the next object.
-
-**READ order within types:**
-
-For classes (CLAS): invoke `abap-vs-reader` for `.clas.abap` first. Once the URI is known, read `.clas.implementations.abap` and `.clas.definitions.abap` directly with `read_file` by substituting the filename suffix — no need to invoke `abap-vs-reader` again for sibling includes. Skip `.clas.testclasses.abap` — test code is not documented in wiki.
-
-For BDEF: read the single `.asbdef` file.
-
-For CDS (DDLS): read the single `.asddls` file.
-
-For TABL: read the `.tabl` file — contains field list and key definitions.
-
-For SRVB: skip source read (XML only). List in artifacts table but mark as `(XML metadata only)`.
-
----
-
-## Phase 4 — GENERATE
-
-Read `references/html-template.md` for the HTML shell, section structure, and formatting conventions.
+Read `references/html-template.md` for section structure and formatting conventions.
 Read `references/diagram-guide.md` for PlantUML templates.
 
-Build the HTML wiki page section by section:
+Write `YYYY-MM-DD-<FeatureName>.wiki.md` to `output_path`.
+
+Build each section:
 
 ### 1. TOC
-Use the template from `references/html-template.md`. All anchor `href="#id"` values must match the `id` attributes in the headings below.
+All anchor `href="#id"` values must match heading `id` attributes below.
 
 ### 2. Business Context
-- Functional purpose: derive from user's additional instructions; if absent, summarize from the main CDS view or BDEF purpose.
-- Business problem: from user instructions or infer from object naming/annotations.
-- Developer notes `<div class="info">`: key technical decisions, integration points mentioned in instructions.
+- Functional purpose: from user instructions; if absent, infer from main CDS view or BDEF annotations
+- Business problem: from user instructions or infer from object naming
+- Key technical decisions and integration points in an info block
 
 ### 3. Technical Context
 
 #### High-Level Design
-- List building blocks as `h5` headings (one per major component group).
-- If a BDEF is present: describe RAP hierarchy (BO root → projections → service).
-- Source: object type analysis + annotations from Phase 2.
+- Building blocks as h5 headings (one per major component group)
+- If BDEF present: describe RAP hierarchy (BO root → projections → service)
 
 #### Application Flow Diagram
-- Build PlantUML sequence diagram using the template from `references/diagram-guide.md`.
-- Participants: derive from BDEF operations (actions, validations) and class method signatures.
-- If no BDEF present: use a simple activity diagram showing the main class interactions.
+- PlantUML sequence diagram using template from `references/diagram-guide.md`
+- Derive participants from BDEF operations (actions, validations) and class method signatures
+- If no BDEF: use activity diagram showing main class interactions
 
 #### Data Model
 
-**CDS View Hierarchy:** build from `DEFINE VIEW EXTENDING` statements in DDLS sources. Show Basic → Composite → Consumption layers plus any Metadata Extensions.
+**CDS View Hierarchy:** build from `DEFINE VIEW EXTENDING` in DDLS sources.
+Show Basic → Composite → Consumption layers plus Metadata Extensions.
 
-**Database Table Model:** build from TABL sources. For each table: extract fields, mark key fields (`<<PK>>`), infer FK relations from JOIN conditions in CDS sources or explicit FK definitions in TABL source. Use entity diagram template from `references/diagram-guide.md`.
+**Database Table Model:** build from TABL and STRU sources.
+Fields, key fields (`<<PK>>`), FK relations from JOIN conditions in CDS or FK definitions in TABL/STRU.
 
 #### Class Diagram
-- Build from INTF and CLAS sources using class diagram template from `references/diagram-guide.md`.
-- Show: interfaces, implementing classes, behavior pools, inheritance, public method signatures.
-- Omit private helper methods unless they are central to understanding the design.
+Build from INTF and CLAS sources. Show: interfaces, implementing classes, behavior pools,
+inheritance, public method signatures. Include lock objects (ENQU) and auth objects (AUTH)
+as notes if present.
+Omit private helper methods unless central to understanding the design.
 
 #### Technical Details
 
@@ -185,44 +196,140 @@ Use the template from `references/html-template.md`. All anchor `href="#id"` val
 |---|---|
 | Package | `<package from object list>` |
 | Transport | `<TR number if provided>` |
-| Namespace | `<derived from primary_namespace in project-config.md>` |
+| Namespace | `<primary_namespace from project-config.md>` |
 | System | `<system_id from abap-vs-reader configs/system.md>` |
 
-*CDS Views table:* one row per DDLS object. Type column: Basic / Composite / Consumption / Extension — derived from `DEFINE VIEW`, `EXTEND VIEW`, and annotations in source.
+*CDS Views table:* one row per DDLS. Type: Basic / Composite / Consumption / Extension.
 
-*Development Artifacts (Full List) table:* one row per object in Phase 2 confirmed list. Columns: `Application Node Name` | `Type` | `Description`. Objects with `⚠ source unavailable` are listed but marked.
+*Development Artifacts (Full List) table:* columns: `Application Node Name` | `Type` | `Description`.
+All objects from confirmed list, including STRU, AUTH, ENQU.
 
-*Behavior Definition Operations Summary table:* only if at least one BDEF is present. Columns: `Entity` | `CRUD Operations` | `Actions` | `Validations` | `Determinations`. Derive from BDEF source.
+*Behavior Definition Operations Summary table:* only if BDEF present.
+Columns: `Entity` | `CRUD Operations` | `Actions` | `Validations` | `Determinations`.
 
-*Message Class table:* only if at least one MSAG is present. Columns: `ID` | `Text` | `Usage`. Derive from MSAG source.
+*Message Class table:* only if MSAG present. Columns: `ID` | `Text` | `Usage`.
 
-### 4. Process Flow
-- Source reference: `TR: <number>` or `git: <ref>` or `pkg: <name>`.
-- Step-by-step `<ol>` instructions: derive from user's additional instructions; if absent, write generic "how to extend this component" steps based on the RAP/class structure.
-- Integration points: list other packages/services referenced in the source (JOIN targets, BAPI calls, interfaces implemented).
+### 4. Error Handling & Messages
+
+Keep concise — inventory only.
+
+*Exception classes table:*
+| Class | Where raised |
+|---|---|
+| `CX_...` | Method / operation name |
+
+Derive from `RAISE`, `RAISE EXCEPTION`, and `cx_` references in all ABAP sources.
+
+*MSAG messages table (only if MSAG present):*
+| ID | Text | Where raised |
+|---|---|---|
+
+If no exception classes and no MSAG found, write a single line:
+"No custom exception classes or message classes found."
+
+### 5. Authorization
+
+*Authority-check objects table:*
+| Auth Object | Fields checked | Method / Operation |
+|---|---|---|
+
+Derive from `AUTHORITY-CHECK OBJECT '...'` in all ABAP sources.
+For AUTH objects in the artifact list, describe their fields.
+
+If no `AUTHORITY-CHECK` found, write a single line:
+"No explicit authority checks found in source."
+
+### 6. Process Flow
+
+- **Fiori Applications:** app IDs, tile descriptions, target mappings — from SRVB metadata or user docs
+- **Implemented Functionality:** brief end-to-end description of what the feature does for the user
+- **User Scenarios (for QA and end users):** numbered step-by-step flows, derived from BDEF operations,
+  test class scenarios, and user instructions
+- **Integration Points:** other packages/services referenced in source (JOINs, CALL FUNCTION, HTTP calls)
+- **Source Reference:** `TR: <number>` or `git: <ref>` or `pkg: <name>`
+
+### 7. Known Issues & Limitations
+
+- Bulleted list of TODO/FIXME comments found in source code (include object name and context)
+- Documented limitations from user-provided documents
+- Known workarounds if mentioned in source or docs
+
+If nothing found, write a single line: "No known issues or limitations documented."
 
 ---
 
-## Phase 5 — SAVE
+### After writing the draft
 
-1. Determine `output_path` from config (default: `docs/wiki`).
-2. Create the folder if it does not exist.
-3. Determine output filename: `YYYY-MM-DD-<FeatureName>.wiki.html` using today's date.
-4. Write the generated HTML to the file.
-5. Confirm to the user:
+Report to user:
+```
+Draft saved: <output_path>/YYYY-MM-DD-<FeatureName>.wiki.md
+Objects documented: N
+Please review the draft and confirm to generate HTML, or request changes.
+```
+
+Wait for user response:
+- **Confirmed / approved** → proceed to Phase 4 (SAVE)
+- **Changes requested** → apply edits to the `.md` file, re-report, wait again
+
+---
+
+## Phase 4 — SAVE
+
+Triggered by user confirmation after `.wiki.md` review.
+
+1. Re-read `references/html-template.md` for the HTML shell and all section/formatting conventions.
+2. Re-read `references/diagram-guide.md` for PlantUML embed patterns.
+3. Generate the full HTML document from the `.wiki.md` content, applying:
+   - HTML shell from template
+   - Heading formats (`h2`, `h3`, `h4`, `h5`) from template
+   - `<pre>@startuml ... @enduml</pre>` for all PlantUML diagrams
+   - Status classes (`.sn`, `.sr`, `.sf`, `.sb`) and `<code>` tags for object names
+   - `<div class="info">` for developer note blocks
+4. Write `YYYY-MM-DD-<FeatureName>.wiki.html` to `output_path`.
+5. Both `.md` and `.html` remain in `output_path` — neither is deleted or moved.
+6. Report:
 
 ```
-Wiki saved: docs/wiki/2026-06-16-SalesOrder.wiki.html
-Objects documented: 11
-Objects skipped (source unavailable): 1 — ZCL_LEGACY_ADAPTER
+Wiki saved:
+  <output_path>/YYYY-MM-DD-<FeatureName>.wiki.md
+  <output_path>/YYYY-MM-DD-<FeatureName>.wiki.html
+Objects documented: N
 ```
 
 ---
 
-## UPDATE mode summary
+## UPDATE MODE
 
-When a previous wiki path is provided (detected in Phase 1):
-- Show the diff between old and new object list in Phase 2 — clearly mark added/removed objects.
-- In Phase 3: only read sources for new/added objects.
-- In Phase 4: regenerate only sections that reference changed objects. Copy unchanged sections verbatim from the previous wiki HTML.
-- Save with today's date — the previous wiki file is NOT overwritten.
+### Trigger
+Presence of a `.wiki.html` or `.wiki.md` path in arguments.
+
+### Steps
+1. Read the existing wiki file.
+2. Parse the *Development Artifacts (Full List)* table to extract the previous object list.
+3. Run COLLECT on new sources to get the current object list.
+4. Determine which objects to re-read:
+
+**If user explicitly listed changed objects** (e.g. `changed: ZCL_SO_Validator`):
+- Read only those objects using the fallback chain
+- Regenerate only sections that reference them
+- Copy unchanged sections verbatim from the previous wiki
+
+**Otherwise (default):**
+- Re-read ALL objects using the fallback chain
+- Compare current source against what was documented
+- Tag each object as `added`, `removed`, `changed`, or `unchanged`
+- Regenerate sections for `added` and `changed` objects only
+- Copy unchanged sections verbatim
+- Flag `removed` objects in the artifacts table
+
+5. Run Phase 3 (GENERATE) and Phase 4 (SAVE) as normal.
+6. Save with today's date — previous wiki file(s) are **not overwritten**.
+7. Show diff summary after save:
+
+```
+Updated: <output_path>/YYYY-MM-DD-<FeatureName>.wiki.md
+Objects: 15 total — 3 changed, 1 added, 1 removed, 10 unchanged
+Changed: ZCL_SO_Validator, ZI_Order, ZC_Order
+Added:   ZCL_NEW_HELPER
+Removed: ZCL_LEGACY_ADAPTER
+```
