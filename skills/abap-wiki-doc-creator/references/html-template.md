@@ -52,8 +52,11 @@ Place sections in this order inside `<body>`:
 1. `<div class="toc">` — Table of Contents (nested `<ul>`, `href="#id"` anchors)
 2. Business Context
 3. Technical Context (with sub-sections)
-4. Process Flow
-5. `<p>&nbsp;</p>` — last line before `</body>`
+4. Error Handling & Messages
+5. Authorization
+6. Process Flow (expanded)
+7. Known Issues & Limitations
+8. `<p>&nbsp;</p>` — last line before `</body>`
 
 Separate major sections with `<hr>`.
 Separate HTML blocks with `<!-- ================================================================ -->`.
@@ -92,7 +95,10 @@ Separate HTML blocks with `<!-- ================================================
         <li><a href="#tech-details">Technical Details</a></li>
       </ul>
     </li>
+    <li><a href="#error-handling">Error Handling &amp; Messages</a></li>
+    <li><a href="#authorization">Authorization</a></li>
     <li><a href="#process-flow">Process Flow</a></li>
+    <li><a href="#known-issues">Known Issues &amp; Limitations</a></li>
   </ul>
 </div>
 ```
@@ -149,11 +155,49 @@ Objects with ⚠ source unavailable are listed but marked.
 
 *Message Class* — message IDs, text, usage context (only if MSAG present)
 
-### 4. Process Flow `id="process-flow"`
-- Source reference (TR / git commit / package)
-- Step-by-step `<ol>` instructions (how to use or extend the component)
-- Integration points with other components
-- Source: user additional instructions + TR/commit metadata
+### 4. Process Flow `id="process-flow"` *(expanded)*
+- Fiori applications: app IDs, tile descriptions, target mappings (from SRVB metadata or user docs)
+- Implemented functionality: brief end-to-end description of what the feature does
+- User scenarios: numbered step-by-step flows for QA and end users — derive from BDEF operations,
+  test class scenarios, and user instructions
+- Integration points: other packages/services referenced in source
+- Source reference: TR / git ref / package
+
+### 5. Error Handling & Messages `id="error-handling"`
+
+Keep concise — inventory only, no deep explanation.
+
+- Exception classes table: `Class` | `Where raised` — from RAISE/RAISE EXCEPTION/CX_ analysis
+- MSAG messages table: `ID` | `Text` | `Where raised` — only if MSAG present
+- Empty state: if no exception classes and no MSAG → single line "No custom exception classes or message classes found."
+
+HTML heading:
+```html
+<h2 id="error-handling"><strong><u><span class="blue">Error Handling &amp; Messages</span></u></strong></h2>
+```
+
+### 6. Authorization `id="authorization"`
+
+- Authority-check objects table: `Auth Object` | `Fields checked` | `Method / Operation`
+  — from AUTHORITY-CHECK OBJECT analysis in all ABAP sources
+- Empty state: if no AUTHORITY-CHECK found → single line "No explicit authority checks found in source."
+
+HTML heading:
+```html
+<h2 id="authorization"><strong><u><span class="blue">Authorization</span></u></strong></h2>
+```
+
+### 7. Known Issues & Limitations `id="known-issues"`
+
+- Bulleted list of TODO/FIXME comments found in source (include object name and approximate location)
+- Documented limitations from user-provided documents
+- Known workarounds if mentioned in source or docs
+- Empty state: if nothing found → single line "No known issues or limitations documented."
+
+HTML heading:
+```html
+<h2 id="known-issues"><strong><u><span class="blue">Known Issues &amp; Limitations</span></u></strong></h2>
+```
 
 ---
 
