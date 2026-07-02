@@ -18,10 +18,13 @@ read order in Phase 3 (READ SOURCES).
 | 6 | INTF | Interface | `.intf.abap` |
 | 7 | CLAS | Class | `.clas.abap` (+ sibling includes) |
 | 8 | TABL | Database Table | `.tabl` |
-| 9 | DTEL | Data Element | `.dtel` |
-| 10 | DOMA | Domain | `.doma` |
-| 11 | MSAG | Message Class | `.prog.msag` |
-| 12 | OTHER | Any other type | — |
+| 9 | STRU | Structure | `.stru` |
+| 10 | AUTH | Authorization Object | `.auth` |
+| 11 | ENQU | Lock Object | `.enqu` |
+| 12 | DTEL | Data Element | `.dtel` |
+| 13 | DOMA | Domain | `.doma` |
+| 14 | MSAG | Message Class | `.prog.msag` |
+| 15 | OTHER | Any other type | — |
 
 ---
 
