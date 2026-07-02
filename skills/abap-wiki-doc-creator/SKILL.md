@@ -33,7 +33,6 @@ Recognise:
 | **Previous wiki** | Path ending in `.wiki.html` or `.wiki.md` — triggers UPDATE mode |
 | **Extra files/docs** | Any other file paths or document references — read before ABAP objects |
 | **FeatureName** | Explicit name in arguments — highest priority |
-| **Additional instructions** | All remaining free text |
 
 If no source is detected, ask:
 > "Please provide at least one source: a package name, transport request (e.g. `H01K123456`), git ref (e.g. `git:abc1234`), or a list of object names."
@@ -73,8 +72,6 @@ Ask the user **only** when:
 1. No source is provided at all
 2. A source is ambiguous (e.g. name matches multiple packages)
 3. Collected object count exceeds 100 — report the count and ask whether to narrow scope
-
-In all other cases proceed silently.
 
 ### Normalise and deduplicate
 
@@ -191,13 +188,7 @@ Omit private helper methods unless central to understanding the design.
 
 #### Technical Details
 
-*Development Details table:*
-| Field | Value |
-|---|---|
-| Package | `<package from object list>` |
-| Transport | `<TR number if provided>` |
-| Namespace | `<primary_namespace from project-config.md>` |
-| System | `<system_id from abap-vs-reader configs/system.md>` |
+*Development Details:* Package (from object list) | Transport (TR if provided) | Namespace (`primary_namespace` from `project-config.md`) | System (`system_id` from `configs/system.md`)
 
 *CDS Views table:* one row per DDLS. Type: Basic / Composite / Consumption / Extension.
 
@@ -211,33 +202,14 @@ Columns: `Entity` | `CRUD Operations` | `Actions` | `Validations` | `Determinati
 
 ### 4. Error Handling & Messages
 
-Keep concise — inventory only.
-
-*Exception classes table:*
-| Class | Where raised |
-|---|---|
-| `CX_...` | Method / operation name |
-
-Derive from `RAISE`, `RAISE EXCEPTION`, and `cx_` references in all ABAP sources.
-
-*MSAG messages table (only if MSAG present):*
-| ID | Text | Where raised |
-|---|---|---|
-
-If no exception classes and no MSAG found, write a single line:
-"No custom exception classes or message classes found."
+*Exception classes:* `Class` | `Where raised` — derive from `RAISE`, `RAISE EXCEPTION`, `cx_` in all sources.
+*Messages (MSAG only):* `ID` | `Text` | `Where raised`
+If neither found: "No custom exception classes or message classes found."
 
 ### 5. Authorization
 
-*Authority-check objects table:*
-| Auth Object | Fields checked | Method / Operation |
-|---|---|---|
-
-Derive from `AUTHORITY-CHECK OBJECT '...'` in all ABAP sources.
-For AUTH objects in the artifact list, describe their fields.
-
-If no `AUTHORITY-CHECK` found, write a single line:
-"No explicit authority checks found in source."
+*Authority-check objects:* `Auth Object` | `Fields checked` | `Method / Operation` — derive from `AUTHORITY-CHECK OBJECT` in all sources. For AUTH objects in the artifact list, describe their fields.
+If none found: "No explicit authority checks found in source."
 
 ### 6. Process Flow
 
@@ -275,19 +247,10 @@ Wait for user response:
 
 ## Phase 4 — SAVE
 
-Triggered by user confirmation after `.wiki.md` review.
-
-1. Re-read `references/html-template.md` for the HTML shell and all section/formatting conventions.
-2. Re-read `references/diagram-guide.md` for PlantUML embed patterns.
-3. Generate the full HTML document from the `.wiki.md` content, applying:
-   - HTML shell from template
-   - Heading formats (`h2`, `h3`, `h4`, `h5`) from template
-   - `<pre>@startuml ... @enduml</pre>` for all PlantUML diagrams
-   - Status classes (`.sn`, `.sr`, `.sf`, `.sb`) and `<code>` tags for object names
-   - `<div class="info">` for developer note blocks
-4. Write `YYYY-MM-DD-<FeatureName>.wiki.html` to `output_path`.
-5. Both `.md` and `.html` remain in `output_path` — neither is deleted or moved.
-6. Report:
+1. Re-read `references/html-template.md` and `references/diagram-guide.md`.
+2. Generate HTML applying all conventions from those references.
+3. Write `YYYY-MM-DD-<FeatureName>.wiki.html` to `output_path`.
+4. Report:
 
 ```
 Wiki saved:
