@@ -33,3 +33,11 @@ Flag additionally (as WARNING) when:
 - Message propagation is missing from validation or action logic.
 - Save-sequence assumptions can create inconsistent state.
 - Handler logic mixes responsibilities in a way that hides contract boundaries.
+
+## Excluded from review output
+
+Even if the underlying pattern is detected, the following signal must **not** appear as a finding in the emitted report. It is a systemic false-positive when the review scope is narrower than the RAP artefact set that binds the pool.
+
+- **Empty behaviour pool referenced by a BDEF outside the current change set.** When a behaviour pool wrapper (`*.clas.abap`) is empty by RAP convention and the BDEF that references it is not part of the reviewed transport / paste / object set, do not emit a `RAP-*` or `ARCH-*` finding about *"no handler binding"* or *"empty behaviour class"*. The actual handler logic lives in the sibling `*.clas.implementations.abap` — read it and review the local classes there. If the includes cannot be read, record a verification gap instead of a finding.
+
+See `references/reporting-format.md` § *Excluded from review output — cross-file policy* for the cross-file rule.

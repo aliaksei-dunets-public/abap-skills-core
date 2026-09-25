@@ -20,3 +20,11 @@ This is a generic baseline. If the workspace provides an explicit naming overlay
 | NAME-07 | Service Definition missing a semantic name, or Service Binding missing the protocol-type suffix (`service_binding_suffix_rules` from config) | WARNING |
 | NAME-08 | Mixed variable naming styles within the same class body — only report when two identifiably different schemes are used side-by-side | INFO |
 
+## Excluded from review output
+
+Even if the underlying pattern is detected, the following signal must **not** appear as a finding in the emitted report. It is a systemic false-positive because sibling handler classes are named per RAP entity and any resulting inconsistency is structural, not stylistic.
+
+- **Naming inconsistency among sibling local behaviour-handler classes.** When two or more local classes (`lhc_<entity>`) inside the same behaviour pool have differing affix / suffix conventions (e.g. one carries a variant token that another does not), do not emit a `NAME-*` finding. RAP entity naming drives the local-class name, so the inconsistency is a downstream consequence of the entity set, not a rule violation.
+
+See `references/reporting-format.md` § *Excluded from review output — cross-file policy* for the cross-file rule.
+

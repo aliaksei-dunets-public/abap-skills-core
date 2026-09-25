@@ -20,6 +20,10 @@ Read `configs/config.md` if it exists; follow any `→ Read …` references insi
 
 Default to all categories when no filter is configured.
 
+### Categories — internal only
+
+The codes below drive the rule-file pass in Phase 5 and dedup in Phase 5.5. **They must not appear in the final report** — no `Rule:` attribute inside findings, no `## Rule coverage` section, no category code in table cells or card fields. See `references/reporting-format.md` § *Prohibited elements*.
+
 | Code | Purpose | Rule file |
 |------|---------|-----------|
 | `ARCH` | Architecture, duplicate/dead/outdated code, risky assumptions | `references/best-practices.md` |
@@ -132,11 +136,30 @@ Do not hide assumptions inside findings — move them to verification gaps.
 
 Apply active categories in the order listed in the Phase 1 table. Read a rule file only when its category is active. Report only rules with an actual violation — omit clean categories entirely. Do not let low-severity style issues outrank behavioral defects.
 
+### Excluded checks — never emit
+
+Even if the underlying rule fires, do **not** report the following patterns. They are false-positive-prone and are handled outside the review loop. Same list is documented in `references/reporting-format.md` § *Excluded from review output* and in the two rule files:
+
+1. **Empty behaviour pool referenced by a BDEF outside the current change set** — `references/rap-review.md`.
+2. **Naming inconsistency among sibling local behaviour-handler classes** — `references/naming-convention.md`.
+
+---
+
+## Phase 5.5 — Deduplicate
+
+Before rendering. Apply `references/reporting-format.md` § *Deduplication rules*:
+
+1. Same location + same root cause → merge into one finding at the highest observed severity.
+2. Same root cause, different locations → one finding, multiple entries joined by ` · ` in `Artifact` / `Location`.
+3. A strictly resolved by fixing B → drop A.
+4. Cross-severity duplicates (same defect, different rules) → keep the higher severity.
+5. Never emit `Merged:` or `Deduplicated:` traces — dedup is internal.
+
 ---
 
 ## Phase 6 — Format Output
 
-Read `references/reporting-format.md` for: severity scale, findings table template, Local Classes / Includes section, consolidated summary format, optional sections, output order, and file path conventions.
+Read `references/reporting-format.md` for the full contract: header line, section order, glance table, card template, finding IDs, dedup rules, prohibited elements, Local Classes / Includes section, consolidated `_summary.md` structure, file-path conventions, and wording rules. That file is the single source of truth for report layout — do **not** invent additional sections or reorder the mandated ones.
 
 ---
 
@@ -146,14 +169,21 @@ Read `references/reporting-format.md` for: severity scale, findings table templa
 Print the complete report in the conversation. Do not create any file.
 
 ### Mode `file`
-Write the complete report to file(s) per the path conventions in `references/reporting-format.md`. After writing, reply in chat with one line per reviewed object:
+Write the complete report to file(s) per the path conventions in `references/reporting-format.md`. After writing, reply in chat with one block per reviewed object (and one aggregated block for transports / packages):
 
 ```
 File: <filename>
-Verdict: <🟢 GO | 🟡 CONDITIONAL GO | 🔴 NO-GO> — <N> CRITICAL, <N> WARNING.
+Header: <🔴|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO
 ```
 
-If there are verification gaps, unresolved dependencies, or objects that could not be read, append a compact block after the verdict line(s):
+Rules for the chat reply:
+
+- **Never** print the words `GO`, `NO-GO`, `CONDITIONAL GO`.
+- Icon rule: 🔴 if any CRITICAL, else 🟢. No 🟡 at the chat level.
+- Counters are always three, always in order CRITICAL → WARNING → INFO, always shown (use `0` explicitly).
+- For transport / package reviews, add a final block for the aggregated `_summary.md` in the same shape.
+
+If there are verification gaps, unresolved dependencies, or objects that could not be read, append a compact block after the header line(s):
 
 ```
 Gaps: <object or include name> — <one-line reason>
