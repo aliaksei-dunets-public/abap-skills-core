@@ -16,6 +16,18 @@ from it via `→ Read configs/<file>.md for ...`.
 - `service_binding_suffix_rules` — Naming rules for Service Definition and Service Binding (NAME-07)
 - `obsolete_package` — Package where obsolete objects should be assigned (DOC-05)
 
+## Pre-check Gate
+
+- `atc_variant` — ATC check variant. When absent or empty, omit `checkVariant` from the MCP call so SAP uses the system default.
+  Example: `atc_variant: ZSECURITY_ATC_DEFAULT`
+- `atc_ignore_priority` — ATC priorities that do not contribute to the failed pre-check status.
+  Default: `atc_ignore_priority: [info]`
+- `unit_test_eligible_extensions` — Object extensions for which the unit-test pre-check runs. Other object types are skipped silently.
+  Default: `unit_test_eligible_extensions: [.clas.abap, .prog.abap, .fugr.func.abap]`
+- `header_suffix` — Optional project-specific icons for ATC and unit-test states. When absent, use the icons defined in `references/reporting-format.md`.
+
+See `references/pre-check.md` for execution and aggregation rules.
+
 ## Category Control
 
 - `active_categories` — Run only the listed category codes; all others are skipped. Takes precedence over `skip_categories`.
@@ -35,6 +47,9 @@ Available category codes:
 - `TEST` — testability checks in the reviewed code
 - `TESTSUG` — suggested additional tests section
 - `DOC` — documentation checks
+- `LOGIC` — hidden logical errors found through control-flow reasoning
+- `RUNTIME` — realistic short-dump, lock, cursor, and LUW risks
+- `EFFIC` — irrational or suboptimal code beyond static PERF/CLEAN rules
 
 Notes:
 
@@ -54,7 +69,7 @@ Notes:
 
 ## Output Mode
 
-- `output_mode` — Where to deliver the review output. Skips the Phase 2.5 question when set.
+- `output_mode` — Where to deliver the review output. Skips the Phase 2.6 question when set.
   Allowed values: `chat`, `file`, `both`.
   Example: `output_mode: file`
   - `chat` — print the full report in the conversation; no file is written.

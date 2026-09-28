@@ -33,6 +33,55 @@ Rules:
 - Counters: always three, always in order CRITICAL → WARNING → INFO. Show `0` explicitly.
 - TR block optional — omit for single-object paste reviews without a transport context. When present, wrap the TR number in backticks.
 - No standalone `## Verdict` section anywhere in the report.
+- The **file header** does not include ATC / tests status. Those signals belong to the `## Pre-check` block and the **chat header suffix** below.
+
+### Chat header suffix
+
+For `file` and `both` modes, append pre-check status after the counters:
+
+```
+Header: <🔴|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO · ATC <✅|❌|⚠️> · tests <✅|❌|⚠️|➖>
+```
+
+- Always append `· ATC <icon>` after the counters.
+- Append `· tests <icon>` only when the object type is eligible for unit tests. Omit it for CDS, BDEF, service definitions/bindings, and DDIC objects.
+- Icons: `✅` clean, `❌` failed, `⚠️` not executed because the tool was unavailable, `➖` no tests found (tests only).
+- For a consolidated transport / package summary, aggregate each signal to the worst observed state: `❌` > `⚠️` > `✅`. Use `➖` for tests only when no eligible object has tests.
+
+## Pre-check block
+
+Place this section immediately after the file header and before `## What changed`:
+
+```markdown
+## Pre-check
+
+- ATC: <status line>
+- Unit tests: <status line>
+```
+
+Allowed status lines:
+
+| Signal | Statuses |
+|---|---|
+| ATC | `✅ clean` · `❌ did not pass (<N> errors, <M> warnings) — details omitted; run ATC in ADT.` · `⚠️ not executed (tool unavailable)` |
+| Unit tests | `✅ <N>/<N> passing.` · `❌ <N> failing — details omitted.` · `➖ no tests found.` · `⚠️ not executed (tool unavailable)` |
+
+Omission and counting rules:
+
+- For an object type ineligible for unit tests, omit the `Unit tests:` line entirely.
+- If both signals were silently skipped, omit the entire `## Pre-check` block.
+- Priorities listed in `atc_ignore_priority` do not count toward the failed ATC status.
+- Pre-check outcomes do not contribute to CRITICAL / WARNING / INFO counters.
+
+### Consolidated pre-check
+
+For transport / package / multi-object summaries:
+
+- `ATC: ❌ <X>/<Y> objects failed — details omitted; run ATC in ADT.` when any object failed.
+- `ATC: ✅ all <Y> objects clean.` when ATC ran successfully for every object and none failed.
+- `ATC: ⚠️ not executed on <Z> objects (tool unavailable).` when no failure exists but ATC was unavailable for at least one object.
+- For mixed states, include a compact breakdown and use the worst icon, for example: `ATC: ❌ 3/12 failed · ⚠️ 2 not executed · ✅ 7 clean — details omitted; run ATC in ADT.`
+- The unit-test denominator excludes ineligible object types. If no object is eligible, write `Unit tests: ➖ not applicable (no eligible object types).`
 
 ## Per-object report structure
 
@@ -40,12 +89,13 @@ Sections in this exact order:
 
 1. `# {{OBJECT_NAME}}` — the ABAP name of the object being reviewed.
 2. Header blockquote (see above).
-3. `## What changed` — 1–3 short bullets describing the intent and delta reviewed.
-4. `## Findings at a glance` — compact table (see below).
-5. `## Details` — one card per finding (see below), sorted CRITICAL → WARNING → INFO, then by finding ID.
-6. `## Local Classes / Includes` — **mandatory for global classes** (see § *Local Classes / Includes*).
-7. `## Verification gaps` — bullets; each starts with the artefact name and one-line reason. Omit the section only if there are no gaps.
-8. `## Recommended next actions` — 2–5 imperative bullets ordered by priority.
+3. `## Pre-check` — ATC and eligible unit-test status. Omit only under the rules above.
+4. `## What changed` — 1–3 short bullets describing the intent and delta reviewed.
+5. `## Findings at a glance` — compact table (see below).
+6. `## Details` — one card per finding (see below), sorted CRITICAL → WARNING → INFO, then by finding ID.
+7. `## Local Classes / Includes` — **mandatory for global classes** (see § *Local Classes / Includes*).
+8. `## Verification gaps` — bullets; each starts with the artefact name and one-line reason. Omit the section only if there are no gaps.
+9. `## Recommended next actions` — 2–5 imperative bullets ordered by priority.
 
 Never emit any of these sections:
 
@@ -118,7 +168,7 @@ None of the following may appear in any emitted report:
 - Sections `## Verdict`, `## Release Gate`, `## Rule coverage`.
 - `Rule:` attribute inside a finding card.
 - `Merged:` / `Deduplicated:` traces.
-- Internal category codes (`ARCH`, `RAP`, `NAME`, `PERF`, `CLEAN`, `CDS`, `TEST`, `DOC`, `CCORE`, `LOC-*`, `ARCH-01`, `RAP-03`, `PERF-02`, etc.) in table cells or card fields. They live inside the workflow only.
+- Internal category codes (`ARCH`, `RAP`, `NAME`, `PERF`, `CLEAN`, `CDS`, `TEST`, `DOC`, `CCORE`, `LOGIC`, `RUNTIME`, `EFFIC`, `LOC-*`, `ARCH-01`, `RAP-03`, `PERF-02`, etc.) in table cells or card fields. They live inside the workflow only.
 - Emoji other than 🔴 / 🟡 / 🟢 as severity markers.
 
 ## Local Classes / Includes (mandatory for global classes)
@@ -164,8 +214,9 @@ Only for transports / packages / multi-object reviews. Structure:
 
 1. `# Consolidated Summary — {{TR_NUMBER_OR_LABEL}}`
 2. Header blockquote — aggregated counters (sum across all per-object reports).
-3. `## Scope` — 1–3 bullets: TR number, package(s), review date, reviewer.
-4. `## Overview` — table:
+3. `## Pre-check` — aggregated ATC and eligible unit-test status.
+4. `## Scope` — 1–3 bullets: TR number, package(s), review date, reviewer.
+5. `## Overview` — table:
 
    ```
    | Object | Type | 🔴 | 🟡 | 🟢 | Report |
@@ -174,10 +225,10 @@ Only for transports / packages / multi-object reviews. Structure:
    | Z_R_EXAMPLE_ROOT    | CDS   | 0 | 1 | 1 | [z-r-example-root.md](./z-r-example-root.md) |
    ```
 
-5. `## Cross-object themes` — 2–5 bullets grouping recurring root causes across objects (e.g. *"validation logic duplicated in three handlers"*).
-6. `## Blockers` — bulleted list of every CRITICAL finding across the TR, format `- **{{OBJECT_NAME}}** · F-N · one-line summary · [details](./file.md#f-n)`.
-7. `## Verification gaps` — aggregated gaps from all per-object reports, deduplicated.
-8. `## Recommended next actions` — 3–7 imperative bullets ordered by priority.
+6. `## Cross-object themes` — 2–5 bullets grouping recurring root causes across objects (e.g. *"validation logic duplicated in three handlers"*).
+7. `## Blockers` — bulleted list of every CRITICAL finding across the TR, format `- **{{OBJECT_NAME}}** · F-N · one-line summary · [details](./file.md#f-n)`.
+8. `## Verification gaps` — aggregated gaps from all per-object reports, deduplicated.
+9. `## Recommended next actions` — 3–7 imperative bullets ordered by priority.
 
 Rules for `_summary.md`:
 
