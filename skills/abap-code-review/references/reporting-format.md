@@ -108,14 +108,14 @@ Never emit any of these sections:
 ```
 | ID | Severity | Artifact | Location | Summary |
 |----|----------|----------|----------|---------|
-| F-1 | 🔴 CRITICAL | {{ABAP_NAME}} ( {{virtual-fs-file}} ) | Lines A-B (`method_name`) | One-line summary of the problem. |
+| F-1 | 🔴 CRITICAL | {{ABAP_NAME}} | Lines A-B (`method_name`) | One-line summary of the problem. |
 ```
 
 Rules:
 
 - `ID` — sequential `F-1`, `F-2`, … within a single per-object report. IDs are local to the report and are **not** reused across TR (each object starts from `F-1`).
 - `Severity` — icon plus uppercase word (`🔴 CRITICAL`, `🟡 WARNING`, `🟢 INFO`).
-- `Artifact` — format `{{ABAP_NAME}} ( {{virtual-fs-file}} )`, e.g. `ZCL_EXAMPLE_HANDLER ( zcl_example_handler.clas.abap )` or `Z_R_EXAMPLE_ROOT ( z_r_example_root.ddls.asddls )`. Do not embed absolute paths in this column.
+- `Artifact` — format `{{ABAP_NAME}}`, e.g. `ZCL_EXAMPLE_HANDLER` or `Z_R_EXAMPLE_ROOT`. Do not print the virtual-FS filename, surrounding parentheses, or absolute paths in this field; retain the filename only as internal evidence for source retrieval and line verification.
 - `Location` — format `Lines A-B (\`anchor\`)`. `anchor` is the enclosing method / determination / validation / entity behaviour block name. For class-level issues use `Lines A-B (class-level)`. For single-line issues collapse: `Line 42 (\`method_name\`)`.
 - `Summary` — one sentence, imperative or descriptive. No code fences in this column.
 - Sort by severity then by `ID`.
@@ -127,7 +127,7 @@ One card per row of the glance table. Card template:
 ```
 ### F-1 · 🔴 CRITICAL · Short title
 
-- **Artifact**: {{ABAP_NAME}} ( {{virtual-fs-file}} )
+- **Artifact**: {{ABAP_NAME}}
 - **Location**: Lines A-B (`method_name`)
 - **Problem**: 1–3 sentences describing the defect and why it is wrong.
 - **Impact**: 1 sentence, business or runtime consequence.
@@ -142,7 +142,7 @@ Rules:
 - Never include a `Rule:` attribute — internal category codes (`ARCH-01`, `RAP-03`, `NAME-06`, `LOC-*`, etc.) drive the rule pass but must not appear in the emitted card.
 - Do not repeat the header line inside a card.
 - If a finding spans multiple locations of the same artefact, list them inside `Location` joined by ` · ` (e.g. `Lines 42-58 (\`method_a\`) · Lines 120-134 (\`method_b\`)`).
-- If a finding spans multiple artefacts (same root cause), list them inside `Artifact` joined by ` · ` and use `Location` `see per-artifact block below`, then add a sub-list one line per artefact.
+- If a finding spans multiple artefacts (same root cause), list their ABAP object names inside `Artifact` joined by ` · ` and use `Location` `see per-artifact block below`, then add a sub-list one line per artefact.
 
 ## Finding IDs
 
@@ -191,7 +191,7 @@ Every review of a global ABAP class must include this section immediately after 
 
 ### Local-class findings
 
-Reuse the same glance table + card format as global findings. Finding IDs continue the same `F-N` sequence — do **not** restart numbering for locals. In the `Artifact` column, use the local-class name (e.g. `lcl_processor` or `lhc_Header`) instead of the global class name. `Location` still uses `Lines A-B (\`method_name\`)`.
+Reuse the same glance table + card format as global findings. Finding IDs continue the same `F-N` sequence — do **not** restart numbering for locals. In the `Artifact` column, use the local-class name (e.g. `lcl_processor` or `lhc_Header`) instead of the global class name. `Location` still uses `Lines A-B (\`method_name\`)`; include filenames remain internal evidence and are omitted from the rendered `Artifact` field.
 ```
 
 Rules:
