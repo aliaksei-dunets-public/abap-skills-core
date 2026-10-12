@@ -19,11 +19,16 @@ description: >
 
 Read `$SKILLS_PATH/project-config.md` for project-wide context.
 Read `$CORE_PATH/skills/<skill-name>/SKILL.md` for core instructions.
-Read `$SKILLS_PATH/<skill-name>/configs/config.md` for project-specific rules.
-If config.md references additional files, read those too before proceeding.
+When this skill's CONFIG_TEMPLATE.md declares configs, read
+`$SKILLS_PATH/<skill-name>/configs/config.md` for project-specific rules.
+Follow its relevant local config links before the phase that requires them.
 
 Apply core instructions using the project context and all loaded config files.
 ```
+
+Replace `$SKILLS_PATH`/`$CORE_PATH` with the resolved project-relative paths.
+Omit the config read for skills without a config contract; never leave an
+unresolvable required link in a generated wrapper.
 
 ---
 

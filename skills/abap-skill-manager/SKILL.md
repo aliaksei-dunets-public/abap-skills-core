@@ -18,7 +18,7 @@ Reference files (read on demand):
 
 - `references/architecture.md` — install modes, paths, setup guides.
 - `references/templates.md` — wrapper SKILL.md and `project-config.md` templates.
-- `references/config-generation.md` — algorithm for generating `configs/config.md`.
+- `references/config-generation.md` — inventory and generation of all declared config files.
 - `references/output-examples.md` — canonical output for `init` / `status` / `validate`.
 - `references/registry-maintenance.md` — what to update when a skill is added or its config contract changes.
 
@@ -26,14 +26,13 @@ Reference files (read on demand):
 
 ## Phase 0 — Detect install mode
 
-Run before any command. Sets: `SKILLS_PATH = .agents/skills`, `INSTALL_MODE`, `CORE_PATH`.
-
-Probe `.agents/skills-core/`:
-
-| Condition | `INSTALL_MODE` | `CORE_PATH` |
-|---|---|---|
-| `skills-core/` exists | `submodule` | `.agents/skills-core` |
-| `skills-core/` absent | `manual` | *(unused)* |
+Run before any command. Resolve `SKILLS_PATH` and `CORE_PATH` from explicit
+project configuration/wrapper paths first. Otherwise use the active platform's
+existing layout: `.agents/skills` + `.agents/skills-core` or `.claude/skills` +
+`.claude/skills-core`. Do not choose between conflicting installations silently.
+Verify submodule registration before choosing `INSTALL_MODE = submodule`;
+copied core directories are manual installations. Without a core, use manual
+mode. Do not move files or create a competing platform layer during discovery.
 
 **Stop conditions:**
 - Submodule + `$CORE_PATH/skills/` missing → tell user: `git submodule update --init`.
@@ -72,9 +71,10 @@ Unknown or empty → print **Help Menu** and stop.
       wrapper template in `references/templates.md` (copy `name`/`description` from core
       frontmatter; use documented fallback if missing). If already exists → mark "already present", skip.
 
-   b. **Both modes — config:** if skill has `CONFIG_TEMPLATE.md` AND
-      `$SKILLS_PATH/<skill>/configs/config.md` missing → generate it per
-      `references/config-generation.md`. Skills without `CONFIG_TEMPLATE.md` get no `configs/` folder.
+   b. **Both modes — config:** if the skill has `CONFIG_TEMPLATE.md`, inventory
+      every declared path/field per `references/config-generation.md`. Create
+      missing required files and append absent fields in their declared owners
+      even when config.md exists. Skills without a template get no configs folder.
 
 4. Print summary table from `references/output-examples.md` and next-steps line.
 
@@ -84,20 +84,23 @@ Unknown or empty → print **Help Menu** and stop.
 
 ### Submodule mode
 
-1. Pull latest core:
-   ```bash
-   cd $CORE_PATH && git pull origin main
-   ```
-   Report commits pulled or "already up to date".
+1. Verify the registered core path/remote; record the old SHA and parent index
+   pointer. Inspect staged/unstaged/untracked core and affected config/wrapper
+   changes. Stop conflicting writes on local edits; never stash/reset them.
+   Resolve the requested ref/version or configured upstream, not an assumed
+   main. Fetch for this update and resolve the target to a SHA. Use fast-forward
+   only on an attached matching branch; for clean detached HEAD, move to the
+   resolved SHA without pulling/merging an arbitrary branch. On divergence,
+   leave local commits intact and report old/target SHAs.
 2. Diff `$CORE_PATH/skills/` vs `$SKILLS_PATH/`. Run init step 3a for skills with no wrapper. Report new wrappers.
-3. **Config enrichment:** for each skill with existing `configs/config.md`, compare against
-   `CONFIG_TEMPLATE.md`. Append any Required/Recommended field not yet present, using
-   `references/config-generation.md` (comment + `TODO` value). Report appended fields or "config up to date".
-4. Stage submodule pointer:
-   ```bash
-   git add $CORE_PATH && git status --short $CORE_PATH
-   ```
-   Report whether pointer SHA changed.
+3. **Config enrichment:** inventory every declared owner including shared context
+   and linked files. Create missing required files and append absent fields per
+   `references/config-generation.md`, preserving existing values.
+4. Verify generated changes/core SHA. Stage only the core pointer if the
+   request/project policy includes staging; otherwise report it as unstaged.
+   Do not commit/push implicitly. On failure, report applied operations. Restore
+   the old core SHA only with a verified clean tree and unchanged ownership;
+   otherwise provide recovery instructions without overwriting local work.
 5. Print summary: skills updated, new wrappers, config fields added, submodule pointer status.
 
 ### Manual mode
@@ -109,11 +112,9 @@ Unknown or empty → print **Help Menu** and stop.
 
 ## Command: `status`
 
-1. **Submodule only** — collect version info:
-   ```bash
-   cd $CORE_PATH && git rev-parse --short HEAD
-   cd $CORE_PATH && git fetch origin main --quiet 2>/dev/null && git rev-parse --short origin/main
-   ```
+1. **Submodule only** — collect local HEAD and configured upstream SHA without
+   fetching. Label upstream freshness unknown if not refreshed; disclose an
+   unavailable lookup rather than claiming up to date.
 2. Build skill list: submodule → scan `$CORE_PATH/skills/`; manual → scan `$SKILLS_PATH/` for subdirs with `SKILL.md`.
 3. Per skill: wrapper exists, config exists, TODO count in `$SKILLS_PATH/<skill>/configs/**`.
 4. Count TODOs in `$SKILLS_PATH/project-config.md`.
@@ -131,16 +132,15 @@ Unknown or empty → print **Help Menu** and stop.
    - Manual → `$SKILLS_PATH/<skill>/CONFIG_TEMPLATE.md`.
    - Missing → "template not found — cannot validate", skip.
 
-3. **Required-field check:** extract field names from every `## Required` heading:
-   - `## Required in \`project-config.md\`` → check `$SKILLS_PATH/project-config.md`.
-   - `## Required in \`configs/<file>.md\`` → check `$SKILLS_PATH/<skill>/configs/<file>.md`.
-   - `## Required Fields` (no path) → check `$SKILLS_PATH/<skill>/configs/config.md` + lazy-linked files.
-
-   Ignore optional examples, category lists, and explanatory text outside `## Required` headings.
-   Field passes if present and value does not contain `TODO`.
-
-4. Render report from `references/output-examples.md`. If all pass: "✅ All required fields are filled
-   in and all skill self-tests pass. Ready to use." If tests fail: report non-zero result and name failing tests.
+3. **Required-field check:** use the same inventory as generation in
+   `references/config-generation.md`, including path headings with a Required
+   column. Missing/unreadable owners, empty values, TODO and conflicting
+   duplicates fail. Validate is read-only; do not append missing fields.
+4. Report config checks separately from self-tests. Execute only documented,
+   runnable, trusted/authorized tests. Otherwise report not available or not
+   executed with the reason; examples are not observed test results. Preserve
+   actual failures and unmet required test gates.
+5. Render the factual report from `references/output-examples.md`.
 
 ---
 
@@ -160,6 +160,6 @@ Commands:
   update       Pull latest core, init new wrappers, append missing config fields
                (submodule only — manual mode prints manual procedure)
   status       Install mode, submodule SHA, wrapper/config presence, TODO counts
-  validate     Check required config fields + run skill self-tests
+  validate     Check config fields; report available self-tests separately
   instruction  Show architecture overview and setup guide
 ```

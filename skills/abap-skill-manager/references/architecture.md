@@ -38,8 +38,9 @@ abap-skills-core/          ← git submodule, shared across all projects
 
 **Source evidence:**
 
-Skills may require ABAP source and related context, but they should not
-prescribe retrieval chains. The agent runtime resolves source acquisition.
+Domain skills declare required source/context; the runtime uses available,
+authorized acquisition tools. Platform-specific URI/cache mechanics belong in
+the abap-vs-reader adapter, not duplicated in every domain skill.
 
 **Setup:**
 
@@ -71,9 +72,10 @@ abap-skill-manager validate
 ```
 abap-skill-manager update
 ```
-Pulls the latest core, creates wrappers for any newly added skills, appends
-missing config fields to existing `config.md` files, and updates the
-submodule pointer.
+Resolves the requested ref/configured upstream with a clean-tree preflight,
+creates missing wrappers and declared config owners, and appends missing fields.
+Pointer staging follows the request/project policy; no implicit commit/push.
+See SKILL.md for conflict and recovery rules.
 
 ---
 
@@ -127,3 +129,9 @@ without the full submodule setup.
 | Platform | skills-core path | skills path |
 |---|---|---|
 | GitHub Copilot (Agents) | `.agents/skills-core` | `.agents/skills` |
+| Codex (project layout) | `.agents/skills-core` | `.agents/skills` |
+| Claude Code | `.claude/skills-core` | `.claude/skills` |
+
+Explicit project/wrapper paths take precedence. Do not silently select between
+conflicting platform installations. Fill every required linked config as well
+as config.md; init/validate share the inventory in config-generation.md.
