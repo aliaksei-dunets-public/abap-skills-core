@@ -28,3 +28,6 @@ Even if the underlying pattern is detected, the following signal must **not** ap
 
 See `references/reporting-format.md` § *Excluded from review output — cross-file policy* for the cross-file rule.
 
+The exclusion applies to structural naming variation alone, not an independently
+confirmed behavior defect or explicit project naming-contract violation.
+

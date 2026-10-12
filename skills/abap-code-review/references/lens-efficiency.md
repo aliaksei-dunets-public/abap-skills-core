@@ -2,7 +2,8 @@
 
 This file is a **reasoning aid**, not a static rule catalog. It does **not** replace ATC. Use it during `SKILL.md` Phase 4 / Phase 5.b to spot waste, needless complexity, and duplicated work that the static rule files (`rules-clean-abap.md`, `rules-performance.md`) do not catch.
 
-> If a static rule already covers the observation (`PERF-02` SELECT-in-LOOP, method exceeding the size limit configured for CLEAN, etc.), **do not** re-report it under EFFIC. Reference the existing rule ID and move on.
+> If an observed static finding covers the same root cause, merge it rather
+> than duplicating it under EFFIC. Keep IDs internal; preserve supported impact.
 
 ## What this lens looks for
 
