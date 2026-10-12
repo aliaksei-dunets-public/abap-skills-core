@@ -131,7 +131,7 @@ Separate HTML blocks with `<!-- ================================================
 
 **Sub-section B — Database Table Model:**
 - PlantUML entity diagram: table fields, key fields, field types, FK relations
-- Relations inferred from: FK definitions in DDIC + JOIN analysis in CDS views
+- Relations: explicit DDIC foreign keys; label CDS joins as query relations
 - Source: TABL objects via abap-vs-reader
 
 #### Class Diagram `id="class-diagram"`
@@ -202,6 +202,12 @@ HTML heading:
 ---
 
 ## Formatting Conventions
+
+Preserve the entry point's evidence labels, PARTIAL coverage and UPDATE review
+gate in HTML. Escape source/user text and PlantUML as HTML text (including
+`<`, `>` and `&`) inside `<pre>`; never turn embedded source into active HTML.
+Templates illustrate layout, not facts about the documented feature. Check
+TOC targets and diagram participants/edges against the inspected source.
 
 - SAP object names: `<code>` tags
 - Special HTML chars: `&mdash;` (—), `&ndash;` (–), `&rarr;` (→), `&amp;` (&), `&nbsp;`
