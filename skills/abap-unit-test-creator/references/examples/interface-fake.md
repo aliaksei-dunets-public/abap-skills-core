@@ -31,7 +31,7 @@ CLASS ltc_<unit_name> DEFINITION FINAL FOR TESTING
   RISK LEVEL HARMLESS.
 
   PRIVATE SECTION.
-    DATA fake_dependency TYPE REF TO <if_dependency>.
+    DATA fake_dependency TYPE REF TO ltd_<dependency_name>.
     DATA cut             TYPE REF TO <class_under_test>.
 
     METHODS setup.
@@ -55,6 +55,9 @@ cl_abap_unit_assert=>assert_equals(
 ```
 
 Rules:
+- Keep a concrete fake reference for its call_count/last_input fields; pass it
+  to the constructor through the production interface contract. Those fields
+  are not accessible through an interface-only reference.
 - Track calls only when the interaction itself matters.
 - Do not overfit one fake to one test if a fixed return value is enough.
 - If production creates the dependency internally, report a blocker or

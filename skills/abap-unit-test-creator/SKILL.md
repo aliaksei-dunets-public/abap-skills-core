@@ -96,11 +96,23 @@ Rules:
 
 ### Step 7 — Verify and report
 
-If tools are available, run the tests, fix errors, re-run until green. If
-not, state explicitly that execution was unverified.
+Before execution, verify the target system/source revision and that setup
+creates every required double before constructing the unit or invoking EML.
+Check direct SQL/CDS dependencies, external wrappers, draft/active semantics,
+rollback and teardown. `IN LOCAL MODE` and `RISK LEVEL HARMLESS` alone do not
+prove isolation. If isolation or the safe target cannot be established, do not
+run; report a blocker and `not executed`.
+
+In an authorized safe environment, run focused tests once and allow at most
+two correction/re-run cycles for defects in the generated tests. Stop earlier
+on missing/unsupported APIs, environment failure, changed source/contract,
+unsafe side effects or a production defect. Do not weaken assertions or modify
+production to obtain green; report the failure and missing evidence. Re-read
+stale source and revise the plan before a new run.
 
 Report: what was tested; isolation strategy per dependency; testability
-blockers; verification status. Do not omit blockers. Do not claim tests pass
+blockers; verification status (`passed`, `failed`, or `not executed`) and actual
+attempts/results. Do not omit blockers. Do not claim tests pass
 without execution evidence.
 
 ---
