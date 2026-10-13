@@ -3,9 +3,10 @@ name: abap-doc-writer
 description: >
   Use to write or update ABAP Doc ("!) comment blocks in ABAP classes and
   interfaces. Trigger on: "write ABAP doc", "add ABAP Doc comments",
-  "document this class/interface/method", "update ABAP Doc",
-  "напиши ABAP Docu", "обнови ABAP Doc", or any request to add or refresh
-  "! comments for methods, parameters, exceptions, or class-level descriptions.
+  "document this class/interface/method", "update ABAP Doc", or any request
+  to add or refresh "! comments for methods, parameters, exceptions, or
+  class-level descriptions. Equivalent requests in other languages also
+  trigger this skill.
   Never modifies ABAP logic — only inserts or updates "! comment lines.
 ---
 
@@ -28,10 +29,11 @@ Extract these fields, applying defaults when absent:
 
 Parse `$ARGUMENTS` and the conversation. Detect mode in order — first match wins:
 
-**Update mode flag:** the user's message contains any of: "update", "refresh",
-"актуализируй", "обнови", "обновить". Set `UPDATE_MODE = true`. This flag is
-independent of the object/method scope — it only controls whether existing
-descriptions may be rewritten.
+**Update mode flag:** the user's message asks to update, refresh, or otherwise
+bring existing documentation up to date. Equivalent wording in another
+language also sets `UPDATE_MODE = true`. This flag is independent of the
+object/method scope — it only controls whether existing descriptions may be
+rewritten.
 
 **Mode A — Method scope:** `$ARGUMENTS` contains one object name AND one or
 more method names (e.g. "document `add_child_entity` in `/DEMO/CL_UPLD_RAP_ENTITY`"),
