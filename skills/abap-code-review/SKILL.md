@@ -109,21 +109,42 @@ Wait for the user's answer. Do not pre-select or recommend any option. Record th
 
 Read `references/review-scope-playbook.md` before collecting.
 
-For each object collect:
-- active source (via `abap-vs-reader`)
-- **global ABAP classes — all sibling includes:** once the main URI is known, read siblings directly with `read_file` by substituting the filename suffix:
-  - `*.clas.definitions.abap` — local type pool, `DEFINITION` blocks
-  - `*.clas.implementations.abap` — local `IMPLEMENTATION` blocks; for RAP behavior pools the entire handler logic lives here — the `*.clas.abap` wrapper is empty by convention
-  - `*.clas.macros.abap` — when present
-  - `*.clas.testclasses.abap` — when `TEST` is active
-- changed logic paths when reviewing a transport or change set
-- related tests when changed logic should be covered
+### 3.a — Diff vs. full source
+
+When reviewing a **transport request or a change set** (Mode C), the diff alone is insufficient. For every changed object:
+
+1. **Read the full activated source** of the object — not only the diff hunks. Use `abap-vs-reader` (or `read_file` with a known virtual URI).
+2. For global ABAP classes read **all sibling includes**:
+   - `*.clas.definitions.abap` — local type pool, `DEFINITION` blocks
+   - `*.clas.implementations.abap` — local `IMPLEMENTATION` blocks; for RAP behavior pools the entire handler logic lives here — the `*.clas.abap` wrapper is empty by convention
+   - `*.clas.macros.abap` — when present
+   - `*.clas.testclasses.abap` — when `TEST` is active
+3. The diff provides the **scope of change**; the full source provides **context, existing patterns, and the pre-existing state** that the change relies on.
+
+Reading only diff hunks without the full source is a **verification gap** — state which objects were read in full and which were not.
+
+For **single-object or paste reviews** (Modes A and B), the full source is already available; step 1 above is satisfied by definition.
+
+### 3.b — Dependency pull
+
+For each changed artifact, identify **direct dependencies** affected by the change:
+
+| Changed type | Dependencies to pull |
+|---|---|
+| CDS interface view | Projection views consuming it; BDEF / behavior pool that references it |
+| BDEF | Behavior pool (all includes); DCLS roles for the CDS entities it governs; projection BDEF if present |
+| Behavior pool class | BDEF it implements; any sibling handler classes for the same root BO |
+| DDIC table | CDS views that select from it; BDEF mapping section |
+| DCLS (access control) | The CDS entity it protects; roles it inherits from or that inherit from it |
+| ABAP program / report | Any class it instantiates that changed in this TR |
+
+Pull only the **direct** dependencies (one hop). Do not cascade further unless a finding requires it. If a dependency cannot be read, record a `verification gap`.
 
 If an include is empty or absent, record it as such and continue. If it cannot be read, record a `verification gap`.
 
 Do not expand into broad repository exploration — pull only what is needed to support a finding or explain a gap.
 
-### Fetching dependencies
+### 3.c — Dependency fetch procedure
 
 When a dependency is required (referenced class, interface, BDEF, CDS, structure, data element, parent exception, secondary include, etc.):
 
@@ -133,6 +154,59 @@ When a dependency is required (referenced class, interface, BDEF, CDS, structure
 4. Only after exhausting steps 1–3, record a `verification gap` and continue. Never silently skip.
 
 Reading only `*.clas.abap` for a class with non-empty includes is a `verification gap` — state which includes were read, which were skipped, and why.
+
+---
+
+## Phase 3.5 — Consistency Check
+
+After collecting the full sources and direct dependencies, verify **cross-artifact consistency** before the architecture and rule passes. This phase surfaces mismatches that are invisible when each artifact is reviewed in isolation.
+
+Check the following, in order:
+
+### BDEF ↔ Behavior Pool
+
+- Every entity declared in the BDEF (`define behavior for`) has a matching `lhc_<entity>` local handler class in the pool's `*.clas.implementations.abap`.
+- Every operation declared in the BDEF (`create`, `update`, `delete`, action, determination, validation) has a matching `METHOD` in the handler class.
+- Every field listed in a BDEF `mapping` section exists in the corresponding DDIC table (or draft table).
+- `authorization master ( global )` claim ↔ `get_global_authorizations` method present and non-trivial in the handler.
+- `authorization dependent by _<assoc>` ↔ no `get_global_authorizations` override needed for that entity.
+
+### CDS view ↔ BDEF mapping
+
+- Every key field in a CDS interface view that is also a key field in the BDEF has a `mapping` entry, or a `readonly : update` or `numbering : managed` qualifier.
+- New fields added to a CDS view are reflected in the BDEF `mapping` section (and the DDIC table) within the same TR or a noted dependency.
+
+### CDS view ↔ DCLS role
+
+- Every `select on <entity>` in a DCLS role matches an existing activated CDS view (or the one being introduced in this TR).
+- `inheriting conditions from entity <E>` — the referenced entity `<E>` exists and its own DCLS role defines the conditions it inherits.
+- Auth objects referenced in `pfcg_auth(…)` clauses are consistent across all DCLS roles that protect the same root BO (e.g. same field names).
+
+### CDS association key changes
+
+- When the join key of an association changes (e.g. from `Oskey` to `SolDosKey`), check that:
+  - the new key field is populated before the view is called (data migration, determination, or initial value);
+  - the cardinality annotation (`[1]`, `[0..1]`, `[1..*]`) still holds after the key change;
+  - any dependent projection views, metadata extensions, and search-help bindings reference the correct element name.
+
+### DDIC table ↔ CDS view / BDEF
+
+- New DDIC table fields appear in the corresponding interface CDS view's select list (or are deliberately omitted with a comment).
+- The BDEF `mapping` section maps the new DDIC field to the CDS element name.
+- Draft table (if the BO is draft-enabled) contains the new field.
+
+### Projection view / metadata extension ↔ interface view
+
+- All elements exposed in a projection view exist in the underlying interface view.
+- Metadata extensions refer to elements that still exist after any rename or removal in the interface view or projection.
+
+**Output of Phase 3.5:**
+
+- Confirmed consistency issues → `confirmed finding` (typically CRITICAL or WARNING) under category `ARCH` / `RAP` / `CDS`.
+- Suspected issues with incomplete evidence → `architectural suspicion`.
+- Unverifiable items (dependency not readable) → `verification gap`.
+
+Do NOT duplicate findings that will be raised by Phase 5 static rules — add only what this cross-artifact check uniquely reveals.
 
 ---
 

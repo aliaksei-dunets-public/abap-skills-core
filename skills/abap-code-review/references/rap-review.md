@@ -13,6 +13,9 @@ Use this reference when the review touches RAP Behavior Definitions, Behavior Im
 | RAP-05 | Draft-enabled BO missing draft database table definition or missing draft action in BDEF | CRITICAL |
 | RAP-06 | CDS entity appears in a Service Definition but has no corresponding Behavior Definition (`define behavior`) — may co-occur with CDS-05; report both, they describe different problems | CRITICAL |
 | RAP-07 | Unmanaged RAP CRUD method (`create_*`, `update_*`, `delete_*`) with no comment indicating which BAPI or FM it delegates to | INFO |
+| RAP-08 | Any EML statement (`READ ENTITIES`, `MODIFY ENTITIES`, `DELETE ENTITIES`, `CREATE ENTITIES`) inside a `LOOP AT … ENDLOOP` block in a RAP handler, determination, validation, or action | CRITICAL | Collect all keys / payload into an internal table first, then call EML once outside the loop. Also report PERF-08. |
+
+> **Note on RAP-08 + PERF-08:** When EML inside a loop is found in a RAP handler/determination/validation, report both RAP-08 and PERF-08. They describe different problems: RAP-08 = violation of RAP bulk-operation contract; PERF-08 = performance consequence (N round-trips instead of 1).
 
 > **Note on RAP-01 + PERF-02:** When the SELECT inside `validate_*`/`determine_*` is also inside a LOOP, report both RAP-01 and PERF-02. They describe different problems: RAP-01 = wrong access pattern; PERF-02 = performance consequence.
 
