@@ -29,7 +29,7 @@ Run `abap-skill-manager validate` to check for missing required fields."
 ## Skills Status
 
 Install mode: submodule
-Core: <current-SHA>  Remote: <remote-SHA>  [UP TO DATE | BEHIND N commits — run: abap-skill-manager update]
+Core: <current-SHA>  Upstream: <cached-SHA or unavailable>  Freshness: <known / unknown>
 
 | Skill                  | Wrapper | Config | TODOs | Notes                         |
 |------------------------|---------|--------|-------|-------------------------------|
@@ -77,7 +77,7 @@ project-config.md: ✓  (TODOs: 0)
 ### abap-code-review/configs/
 ✓ primary_namespace
 ✓ ddic_naming_rules  (configs/naming.md)
-✗ auth_check_class_pattern — field missing or TODO
+△ auth_check_class_pattern — recommended field missing or TODO (not required)
 
 ### abap-doc-writer/configs/
 ✓ doc_language  (configs/config.md)
@@ -92,17 +92,23 @@ project-config.md: ✓  (TODOs: 0)
 ✓ primary_namespace  (project-config.md)
 
 ### Skill self-tests
-✓ abap-vs-reader: tests passed (9)
-— abap-code-review: no tests
-— abap-unit-test-creator: no tests
+— abap-vs-reader: not available — no documented runnable self-test
+— abap-code-review: not executed — no authorized test command
+— abap-unit-test-creator: not executed — SAP runtime unavailable
 
 ---
-Summary: 2 validation error(s), 0 test failure(s).
+Summary: 1 validation error; self-tests not executed (not a passing test result).
 Fix the flagged fields, then run `abap-skill-manager validate` again.
 ```
 
-If all checks **and** all skill self-tests pass, replace the report body with:
-"✅ All required fields are filled in and all skill self-tests pass. Ready to use."
+Examples above illustrate layout; never copy their statuses as observed results.
+If config checks pass: "All required config fields are filled in." Add actual
+self-test results separately, including skipped/unavailable tests and unmet gates.
 
 If config is OK but tests fail, the manager must report a non-zero overall
 result and surface the failing test names.
+
+The Config column is complete only when every required owner exists, including
+linked files such as abap-vs-reader/configs/system.md. Recommended fields do not
+become required merely because the example lists them. Generated stubs/TODOs
+must not appear as a valid ready configuration.

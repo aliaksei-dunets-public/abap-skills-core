@@ -62,7 +62,7 @@ For long exception/class names that exceed the column, the description moves to 
 | No `"!` block exists | Generate full new block |
 | Block exists, no free-text description | Add one-sentence description |
 | Block exists, description present, NOT update mode | **Preserve** — do not touch |
-| Block exists, description present, update mode | Rewrite with new generated description |
+| Block exists, description present, update mode | Revise only statements contradicted by the current implementation or supplied requirements; preserve supported explanations and protected content |
 | `@parameter` tag missing for a parameter in signature | **Append** tag in correct position |
 | `@parameter` tag present for a parameter **removed** from signature | **Remove** tag |
 | `@parameter` tag present, description exists | Preserve description as-is |
@@ -78,7 +78,10 @@ After any structural change (add/remove tags), **recalculate** the `|` alignment
 
 When generating a new description (no existing text, or update mode):
 - One sentence for methods; two sentences for class/interface level.
-- Derive from: method name, parameter names, return type, exception names.
+- Ground behavior in the implementation and supplied requirements; use names,
+  parameter types and exceptions as supporting clues, not proof of business
+  semantics. If context cannot establish behavior, keep existing explanations
+  and report the uncertainty rather than inventing a replacement.
 - Write in `doc_language` (default: EN).
 - Start with a verb in third person singular: "Returns …", "Adds …", "Validates …", "Creates …".
 
@@ -148,11 +151,11 @@ Template for a new class block:
 "! Manages the upload of RAP entity data.
 CLASS zcl_example DEFINITION
 ```
-(Replace the description text with a sentence derived from the class name and purpose.)
+(Replace with a description supported by the source or supplied requirements.)
 
 Template for a new interface block:
 ```abap
 "! Defines the contract for upload service operations.
 INTERFACE zif_example
 ```
-(Replace the description text with a sentence derived from the interface name and purpose.)
+(Replace with a description supported by the interface contract or supplied requirements.)

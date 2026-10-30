@@ -2,7 +2,8 @@
 
 This file is a **reasoning aid**, not a static rule catalog. It does **not** replace ATC. Use it during `SKILL.md` Phase 4 / Phase 5.b to predict short dumps, unhandled system exceptions, and LUW / lock leaks that ATC does not raise.
 
-> Anything ATC already flags (dead code, obsolete syntax, DB access checks) is out of scope here — the pre-check block already reports the ATC verdict.
+> Deduplicate observed ATC findings, preserving the source-confirmed cause and
+> consequence. An unavailable ATC result does not prove a pattern is covered.
 
 ## What this lens looks for
 

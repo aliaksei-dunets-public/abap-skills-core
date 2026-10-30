@@ -21,7 +21,7 @@ Exactly three severity levels. No fourth level, no numeric scores, no priority l
 
 ## Header line
 
-Every per-object report and every `_summary.md` starts with a one-line blockquote header:
+After the object/summary heading, put a one-line blockquote header:
 
 ```
 > {{VERDICT_ICON}} · {{N}} CRITICAL · {{N}} WARNING · {{N}} INFO · TR `{{TR_NUMBER}}`
@@ -29,7 +29,11 @@ Every per-object report and every `_summary.md` starts with a one-line blockquot
 
 Rules:
 
-- Icon: `🔴` if any CRITICAL, else `🟢`. **Never** print the words `GO`, `NO-GO`, `CONDITIONAL GO`.
+- Combined icon (file and chat): `🔴` for any CRITICAL or observed failed
+  ATC/eligible unit test; otherwise `🟡` for unavailable/timed-out/incomplete
+  checks, no eligible tests found or material verification gaps; otherwise
+  `🟢`. Counters describe manual findings only. This is not a release approval.
+  Never print the words `GO`, `NO-GO`, `CONDITIONAL GO`.
 - Counters: always three, always in order CRITICAL → WARNING → INFO. Show `0` explicitly.
 - TR block optional — omit for single-object paste reviews without a transport context. When present, wrap the TR number in backticks.
 - No standalone `## Verdict` section anywhere in the report.
@@ -40,12 +44,13 @@ Rules:
 For `file` and `both` modes, append pre-check status after the counters:
 
 ```
-Header: <🔴|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO · ATC <✅|❌|⚠️> · tests <✅|❌|⚠️|➖>
+Header: <🔴|🟡|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO · ATC <✅|❌|⚠️> · tests <✅|❌|⚠️|➖>
 ```
 
 - Always append `· ATC <icon>` after the counters.
 - Append `· tests <icon>` only when the object type is eligible for unit tests. Omit it for CDS, BDEF, service definitions/bindings, and DDIC objects.
-- Icons: `✅` clean, `❌` failed, `⚠️` not executed because the tool was unavailable, `➖` no tests found (tests only).
+- Icons: `✅` observed complete/clean, `❌` observed failed, `⚠️` unavailable,
+  timeout, execution error or incomplete evidence, `➖` confirmed no tests.
 - For a consolidated transport / package summary, aggregate each signal to the worst observed state: `❌` > `⚠️` > `✅`. Use `➖` for tests only when no eligible object has tests.
 
 ## Pre-check block
@@ -63,13 +68,14 @@ Allowed status lines:
 
 | Signal | Statuses |
 |---|---|
-| ATC | `✅ clean` · `❌ did not pass (<N> errors, <M> warnings) — details omitted; run ATC in ADT.` · `⚠️ not executed (tool unavailable)` |
-| Unit tests | `✅ <N>/<N> passing.` · `❌ <N> failing — details omitted.` · `➖ no tests found.` · `⚠️ not executed (tool unavailable)` |
+| ATC | `✅ clean` · `❌ did not pass (<N> errors, <M> warnings) — <diagnostic/result reference>` · `⚠️ not verified — <reason/job ID>` |
+| Unit tests | `✅ <N>/<N> passing.` · `❌ <N> failing — <diagnostic/result reference>` · `➖ no tests found.` · `⚠️ not verified — <reason>` |
 
 Omission and counting rules:
 
 - For an object type ineligible for unit tests, omit the `Unit tests:` line entirely.
-- If both signals were silently skipped, omit the entire `## Pre-check` block.
+- Omit the block only when both checks are proven inapplicable. Unavailable
+  ATC, timeouts and failures remain visible with their reason.
 - Priorities listed in `atc_ignore_priority` do not count toward the failed ATC status.
 - Pre-check outcomes do not contribute to CRITICAL / WARNING / INFO counters.
 
@@ -77,10 +83,11 @@ Omission and counting rules:
 
 For transport / package / multi-object summaries:
 
-- `ATC: ❌ <X>/<Y> objects failed — details omitted; run ATC in ADT.` when any object failed.
+- `ATC: ❌ <X>/<Y> objects failed — <sanitized diagnostics/result references>.` when any object failed.
 - `ATC: ✅ all <Y> objects clean.` when ATC ran successfully for every object and none failed.
-- `ATC: ⚠️ not executed on <Z> objects (tool unavailable).` when no failure exists but ATC was unavailable for at least one object.
-- For mixed states, include a compact breakdown and use the worst icon, for example: `ATC: ❌ 3/12 failed · ⚠️ 2 not executed · ✅ 7 clean — details omitted; run ATC in ADT.`
+- `ATC: ⚠️ not verified on <Z> objects — <reasons>.` when no failure exists but a check is unavailable, timed out or incomplete.
+- For mixed states, include a compact breakdown and worst icon, for example:
+  `ATC: ❌ 3/12 failed · ⚠️ 2 timed out · ✅ 7 clean — <result references>.`
 - The unit-test denominator excludes ineligible object types. If no object is eligible, write `Unit tests: ➖ not applicable (no eligible object types).`
 
 ## Per-object report structure
@@ -226,13 +233,16 @@ Only for transports / packages / multi-object reviews. Structure:
    ```
 
 6. `## Cross-object themes` — 2–5 bullets grouping recurring root causes across objects (e.g. *"validation logic duplicated in three handlers"*).
-7. `## Blockers` — bulleted list of every CRITICAL finding across the TR, format `- **{{OBJECT_NAME}}** · F-N · one-line summary · [details](./file.md#f-n)`.
+7. `## Blockers` — every CRITICAL and failed required pre-check across the TR,
+   with object, finding/result identifier, sanitized reason and safe reference.
+   Example finding: `- **{{OBJECT_NAME}}** · F-N · one-line summary · [details](./file.md#f-n)`.
 8. `## Verification gaps` — aggregated gaps from all per-object reports, deduplicated.
 9. `## Recommended next actions` — 3–7 imperative bullets ordered by priority.
 
 Rules for `_summary.md`:
 
-- Header rule identical to per-object reports: 🔴 if any CRITICAL across all objects, else 🟢. Never print the words `GO`, `NO-GO`, `CONDITIONAL GO`.
+- Header rule identical to the combined per-object rule above; any failed check
+  is red, incomplete evidence yellow. Never print GO/NO-GO/CONDITIONAL GO.
 - Do not repeat per-object cards — link to the per-object file instead.
 - Do not emit a `## Verdict` or `## Release Gate` section.
 
@@ -259,7 +269,10 @@ Create the target folder if it does not exist.
 
 ## Excluded from review output — cross-file policy
 
-Two check patterns must never emit a finding in the report, even if the underlying rule fires. They are false-positive-prone and are handled outside the review loop:
+Two patterns alone do not prove a finding. Exclude stylistic/empty-wrapper
+inferences below, but retain independently demonstrated broken behavior,
+missing binding or an explicit project-contract violation. An exclusion never
+suppresses a required pre-check failure:
 
 1. **Empty behaviour pool referenced by a BDEF outside the current change set.** When a behaviour pool wrapper is empty (`*.clas.abap` empty by RAP convention) and the BDEF that references it is not part of the reviewed transport / paste / object set, do **not** emit a `RAP-*` or `ARCH-*` finding about *"no handler binding"* — the handler lives in a sibling class not visible in the current scope.
 2. **Naming inconsistency among sibling local behaviour-handler classes.** When two or more local classes (`lhc_<entity>`) inside the same behaviour pool have inconsistent affix / suffix conventions (e.g. one uses a variant token another does not), do **not** emit a `NAME-*` finding. Sibling handlers are named per RAP entity and the resulting inconsistency is structural, not stylistic.

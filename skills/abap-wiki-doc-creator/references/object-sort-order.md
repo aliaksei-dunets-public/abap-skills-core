@@ -1,8 +1,7 @@
 # Object Type Sort Order
 
 Used in Phase 1 (COLLECT) to produce the canonical, deduplicated object list.
-Sorting order defines both the display order in Phase 2 (SHOW LIST) and the
-read order in Phase 3 (READ SOURCES).
+Sorting order defines the collected list and the read order in Phase 2 (READ).
 
 ---
 

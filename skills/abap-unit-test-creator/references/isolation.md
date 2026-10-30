@@ -23,7 +23,7 @@ generate tests at depth 2.
 | Static method | Wrapper/interface seam → test seam (if allowed) → blocker |
 | Direct SQL table | `cl_osql_test_environment` (if allowed) |
 | CDS entity | `cl_cds_test_environment` (if allowed) |
-| RAP EML | EML test with transactional isolation, usually `IN LOCAL MODE` |
+| RAP EML | Verified dependency doubles/seams plus transactional cleanup; `IN LOCAL MODE` alone is not isolation |
 | RAP validation/determination | Direct handler test or EML test, depending on accessibility |
 | RAP saver/finalize/check_before_save | Assert failed/reported/messages/buffered without productive persistence |
 | Draft behavior | Determine active vs draft scenario explicitly before EML |

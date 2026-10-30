@@ -22,6 +22,10 @@ implementation.
 
 ## EML rules
 
+Before running, verify dependency replacement and a safe test target. Local
+mode does not prove DB/external isolation; rollback cannot undo external calls
+or all side effects. If these boundaries are unknown, report not executed.
+
 - `%tky` is the default key reference. Use `%key` only when the entity has no
   draft behavior and `%tky` does not apply. Never mix `%tky` and `%key` in
   one EML block.

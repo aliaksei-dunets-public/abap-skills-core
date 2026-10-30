@@ -125,7 +125,7 @@ Once the URI is known, read `.clas.implementations.abap`, `.clas.definitions.aba
 
 **Test classes contain valuable behaviour information and must not be skipped.**
 
-### Fallback chain — no object is ever skipped
+### Fallback chain and coverage
 
 ```
 1. Direct read_file via virtual URI
@@ -138,9 +138,15 @@ Once the URI is known, read `.clas.implementations.abap`, `.clas.definitions.aba
    - Paste the source content directly
    - Any other means available to them
 
-   → Wait for user response before continuing.
-   → Do NOT proceed to GENERATE until all objects are resolved.
+   → Record the object/include and read failure; continue independent reads.
+   → For complete documentation, wait for the missing source.
+   → If the user authorizes partial documentation, GENERATE only from available
+     evidence and prominently mark the draft and HTML PARTIAL.
 ```
+
+Keep every collected object in the artifacts table with its read status. List
+unread objects/includes and unknown facts in Known Issues & Limitations. In
+partial scope, qualify negative claims as "not found in the inspected sources".
 
 ---
 
@@ -157,9 +163,15 @@ Build each section:
 All anchor `href="#id"` values must match heading `id` attributes below.
 
 ### 2. Business Context
-- Functional purpose: from user instructions; if absent, infer from main CDS view or BDEF annotations
-- Business problem: from user instructions or infer from object naming
+- Functional purpose and business problem: from user-provided requirements/docs.
+  If absent, state "business context not supplied"; object names and annotations
+  are clues, not evidence of a business requirement.
 - Key technical decisions and integration points in an info block
+
+Separate source facts (cite object/include), user-provided business context,
+and explicitly labeled hypotheses. Document only observed relations and flows;
+signatures alone do not prove call order, UI behavior or business scenarios.
+Unverified scenarios may be proposed for QA but must not be called implemented.
 
 ### 3. Technical Context
 
@@ -174,11 +186,14 @@ All anchor `href="#id"` values must match heading `id` attributes below.
 
 #### Data Model
 
-**CDS View Hierarchy:** build from `DEFINE VIEW EXTENDING` in DDLS sources.
-Show Basic → Composite → Consumption layers plus Metadata Extensions.
+**CDS View Hierarchy:** build from actual DDLS definitions, projections,
+associations, data sources and extensions. Show Basic/Composite/Consumption
+layers only when supported by source or supplied architectural documentation;
+do not assume inheritance or layers from naming.
 
 **Database Table Model:** build from TABL and STRU sources.
-Fields, key fields (`<<PK>>`), FK relations from JOIN conditions in CDS or FK definitions in TABL/STRU.
+Fields, key fields (`<<PK>>`), FK relations from explicit DDIC definitions.
+Label CDS JOIN conditions as query relations, not proven foreign-key constraints.
 
 #### Class Diagram
 Build from INTF and CLAS sources. Show: interfaces, implementing classes, behavior pools,
@@ -216,7 +231,8 @@ If none found: "No explicit authority checks found in source."
 - **Fiori Applications:** app IDs, tile descriptions, target mappings — from SRVB metadata or user docs
 - **Implemented Functionality:** brief end-to-end description of what the feature does for the user
 - **User Scenarios (for QA and end users):** numbered step-by-step flows, derived from BDEF operations,
-  test class scenarios, and user instructions
+  observed implementations, test class scenarios, and user instructions; mark
+  proposed or unverified user flows explicitly
 - **Integration Points:** other packages/services referenced in source (JOINs, CALL FUNCTION, HTTP calls)
 - **Source Reference:** `TR: <number>` or `git: <ref>` or `pkg: <name>`
 
@@ -242,6 +258,9 @@ Please review the draft and confirm to generate HTML, or request changes.
 Wait for user response:
 - **Confirmed / approved** → proceed to Phase 4 (SAVE)
 - **Changes requested** → apply edits to the `.md` file, re-report, wait again
+
+This gate also applies to UPDATE. Reuse explicit permission already given for
+HTML generation within the current scope; otherwise draft review is required.
 
 ---
 
@@ -285,8 +304,12 @@ Presence of a `.wiki.html` or `.wiki.md` path in arguments.
 - Copy unchanged sections verbatim
 - Flag `removed` objects in the artifacts table
 
-5. Run Phase 3 (GENERATE) and Phase 4 (SAVE) as normal.
+5. Run Phase 3 (GENERATE), honoring its review gate, then Phase 4 (SAVE) only
+   after confirmation or existing explicit authorization for HTML generation.
+   For changed-only input, label copied sections as not revalidated against
+   current source; prior prose alone cannot establish an unchanged source.
 6. Save with today's date — previous wiki file(s) are **not overwritten**.
+   If today's name already exists, use a unique suffix and report both paths.
 7. Show diff summary after save:
 
 ```

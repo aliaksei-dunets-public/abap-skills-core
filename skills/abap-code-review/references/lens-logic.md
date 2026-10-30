@@ -2,7 +2,9 @@
 
 This file is a **reasoning aid**, not a static rule catalog. It does **not** replace ATC. Use it during `SKILL.md` Phase 4 (architecture-first) and Phase 5.b (lens pass) to reason about correctness beyond what a static checker can see.
 
-> Static rules that ATC already covers (obsolete statements, unreachable statements, DB access rules, empty CATCH) must NOT be duplicated here — Phase 0.5 already reports the ATC verdict.
+> Deduplicate against observed ATC results from Phase 2.5. Do not suppress a
+> source-confirmed defect merely because ATC might cover its pattern; retain
+> cause/impact and reference the actual result when both describe one issue.
 
 ## What this lens looks for
 

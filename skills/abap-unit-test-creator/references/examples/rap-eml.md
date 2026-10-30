@@ -10,6 +10,10 @@ validations, determinations, actions, or transactional buffer behavior.
 
 Use only verified BDEF, entity, field, and key names.
 
+The example illustrates EML syntax, not complete isolation. Add verified
+dependency doubles/seams and safe setup before execution; LOCAL MODE and
+ROLLBACK ENTITIES do not make productive/external calls safe.
+
 ```abap
 "--- ILLUSTRATIVE EXAMPLE ONLY — replace all <...> with verified identifiers ---
 CLASS ltc_<behavior_entity> DEFINITION FINAL FOR TESTING

@@ -3,6 +3,12 @@
 Templates for each diagram type used in the wiki. All diagrams are embedded as
 raw PlantUML source inside `<pre>@startuml ... @enduml</pre>` — no rendering.
 
+The examples are placeholders. Include only participants and relations supported
+by inspected source or supplied documentation; label hypotheses separately.
+Escape the PlantUML text for HTML inside `<pre>` without changing its displayed
+content. A join does not prove a foreign key, and a view prefix does not prove
+inheritance or its architectural layer.
+
 ---
 
 ## Sequence / Application Flow Diagram

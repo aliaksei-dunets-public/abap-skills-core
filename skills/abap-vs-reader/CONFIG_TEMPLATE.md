@@ -1,6 +1,6 @@
 # Config Template: abap-vs-reader
 
-## `project-config.md`
+## Required in `project-config.md`
 
 | Field | Format | Description |
 |---|---|---|
@@ -24,4 +24,26 @@ virtual_default_subpackage_chain:
 virtual_known_subpackages:
   '(DEMO)CL_UPLOAD_*': (DEMO)COCKPITS/(DEMO)UPLOAD_FILE
   '(DEMO)I_PRICING_*': (DEMO)PRICING
+```
+
+## Required in `configs/config.md`
+
+Entry point linking to the verified skill-local `configs/system.md` (or an
+explicit existing shared owner). System fields are required in that owner,
+not duplicated in this entry point. Legacy installs with only system.md remain
+readable; manager init/update creates the missing entry point and link.
+
+## Optional in `configs/config.md`
+
+- `cache_mode`: `none` (default), `read`, or `read-write`. Persistence is an
+  explicit opt-in; read failures never authorize unconditional index rewriting.
+- `connection_id`, `workspace_id`: actual verified context identities, required
+  only to use the persistent index. If unavailable, ignore the index.
+
+Example entry point:
+
+```markdown
+# abap-vs-reader — Project Config
+cache_mode: none
+→ Read `configs/system.md` for required ADT connection fields.
 ```

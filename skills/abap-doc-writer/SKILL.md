@@ -3,9 +3,10 @@ name: abap-doc-writer
 description: >
   Use to write or update ABAP Doc ("!) comment blocks in ABAP classes and
   interfaces. Trigger on: "write ABAP doc", "add ABAP Doc comments",
-  "document this class/interface/method", "update ABAP Doc",
-  "напиши ABAP Docu", "обнови ABAP Doc", or any request to add or refresh
-  "! comments for methods, parameters, exceptions, or class-level descriptions.
+  "document this class/interface/method", "update ABAP Doc", or any request
+  to add or refresh "! comments for methods, parameters, exceptions, or
+  class-level descriptions. Equivalent requests in other languages also
+  trigger this skill.
   Never modifies ABAP logic — only inserts or updates "! comment lines.
 ---
 
@@ -28,10 +29,11 @@ Extract these fields, applying defaults when absent:
 
 Parse `$ARGUMENTS` and the conversation. Detect mode in order — first match wins:
 
-**Update mode flag:** the user's message contains any of: "update", "refresh",
-"актуализируй", "обнови", "обновить". Set `UPDATE_MODE = true`. This flag is
-independent of the object/method scope — it only controls whether existing
-descriptions may be rewritten.
+**Update mode flag:** the user's message asks to update, refresh, or otherwise
+bring existing documentation up to date. Equivalent wording in another
+language also sets `UPDATE_MODE = true`. This flag is independent of the
+object/method scope — it only controls whether existing descriptions may be
+rewritten.
 
 **Mode A — Method scope:** `$ARGUMENTS` contains one object name AND one or
 more method names (e.g. "document `add_child_entity` in `/DEMO/CL_UPLD_RAP_ENTITY`"),
@@ -61,7 +63,12 @@ Invoke **`abap-vs-reader`** with the object name from Phase 2.
 | Local definitions | `*.clas.definitions.abap` | Additional `DEFINITION` blocks — write target |
 | Implementations | `*.clas.implementations.abap` | Read only for context — never written |
 
-Record the resolved local file path for each include (write targets for Phase 5). Skip empty or absent includes silently.
+Record each source URI, object/include identity, original bytes and revision (or
+content hash). A virtual ADT URI is not a local filesystem path. Resolve a write
+target only from an explicit, verified workspace mapping or an available ADT
+write API that supports revision-conditional updates; never guess the mapping.
+Distinguish absent optional includes from read failures. Report unreadable
+includes as coverage gaps; do not write a file whose baseline was not read.
 
 **For interfaces** — read `*.intf.abap` only. This is the single write target.
 
@@ -117,9 +124,12 @@ other declarations, report `[OUT OF SCOPE]` — do not modify them.
    - `[UPDATED]` — existing block was modified (tags added/removed, description rewritten in update mode)
    - `[SKIPPED]` — existing block is complete; no changes needed
 
+If a declaration or chain cannot be parsed unambiguously, leave its block
+unchanged and report `[NOT WRITTEN]` with the parsing limitation.
+
 ### Class / interface level doc
 
-Apply §11 of the rules: generate a one-block class/interface description above
+In whole-object scope, apply §11 of the rules: generate a one-block class/interface description above
 `CLASS ... DEFINITION` or `INTERFACE` if absent. If already present, mark
 `[SKIPPED]` and do not touch it.
 
@@ -132,19 +142,31 @@ Apply §11 of the rules: generate a one-block class/interface description above
 
 ### Write back
 
-Write back only `*.clas.abap` and `*.clas.definitions.abap` files. Never write
+Write back only `*.clas.abap`, `*.clas.definitions.abap`, and, for interfaces,
+`*.intf.abap` files. Never write
 to `*.clas.implementations.abap` — it was read in Phase 3 for context only.
 
 For each include file that has at least one `[ADDED]` or `[UPDATED]`
 declaration:
 
-1. Take the original source text.
-2. Replace only the `"!` comment lines that were modified — preserve every
-   other line exactly (character-for-character).
-3. Write the full modified source back to the resolved local file path from
-   Phase 3 using the file write tool.
-4. If the write fails, report the error and leave that file unchanged. Do not
-   attempt partial writes.
+1. Verify the target still identifies the same system, object and include.
+   Without a verified writable target, return the proposed comment diff and
+   report `[NOT WRITTEN]`; do not treat an ADT URI as a local path.
+2. Build a minimal comment-only patch against the recorded baseline. Compare
+   all non-`"!` lines, encoding and line endings before writing. Preserve
+   `{@link ...}` tokens and shorttext paragraphs exactly; if removing a stale
+   tag would discard either, retain the protected content in the block.
+3. Re-read the target and compare its revision or bytes with the baseline.
+   On a conflict, stop that write and report it; do not overwrite newer text.
+   Apply only with a revision-conditional API or a local editor/file tool whose
+   conflict detection protects the baseline during the write. A re-read alone
+   does not prevent a race; if the tool cannot protect it, return a patch.
+4. Read back and check the expected comment diff and unchanged non-comment
+   bytes. On failure, report actual observed state (or unknown state), including
+   any earlier includes already written. Do not promise a failed write left
+   the file unchanged. Restore the baseline only when the current revision is
+   verified as this operation's write and restoration is conflict-safe;
+   otherwise supply recovery guidance without overwriting concurrent edits.
 
 ### Report
 

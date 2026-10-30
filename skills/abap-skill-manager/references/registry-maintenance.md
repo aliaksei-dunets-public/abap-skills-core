@@ -70,14 +70,16 @@ For those cases, update `abap-skill-manager` only if one of these is true:
 When creating or updating skills, enforce this architecture rule:
 
 - skills may declare which source and related context they need
-- skills must not prescribe retrieval chains, tool probe order, or platform-specific fallback flows
+- platform-specific acquisition mechanics belong in the source-reader adapter;
+  domain skills declare needed evidence without duplicating those mechanics
 - missing evidence should be handled by one scoped unblock question, a verification-gap note, or an explicit stop
 
-Treat new procedural source-reading logic in a skill as a maintenance issue and remove it before finishing the update.
+Review duplicated retrieval logic as a maintenance issue. Preserve the
+source-reader's own platform contract rather than removing its core capability.
 
 ---
 
-## Checklist (apply for every skill change)
+## Checklist (apply to affected registry contracts)
 
 - [ ] `init` summary table updated
 - [ ] `status` submodule table updated

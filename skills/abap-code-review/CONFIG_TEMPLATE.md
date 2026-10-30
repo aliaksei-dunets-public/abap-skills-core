@@ -20,6 +20,8 @@ from it via `→ Read configs/<file>.md for ...`.
 
 - `atc_variant` — ATC check variant. When absent or empty, omit `checkVariant` from the MCP call so SAP uses the system default.
   Example: `atc_variant: ZSECURITY_ATC_DEFAULT`
+- `atc_timeout_seconds` — Positive maximum wait, default 300 seconds.
+- `atc_max_polls` — Positive maximum polls, default 30; stop at the first limit.
 - `atc_ignore_priority` — ATC priorities that do not contribute to the failed pre-check status.
   Default: `atc_ignore_priority: [info]`
 - `unit_test_eligible_extensions` — Object extensions for which the unit-test pre-check runs. Other object types are skipped silently.

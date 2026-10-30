@@ -44,3 +44,7 @@ Even if the underlying pattern is detected, the following signal must **not** ap
 - **Empty behaviour pool referenced by a BDEF outside the current change set.** When a behaviour pool wrapper (`*.clas.abap`) is empty by RAP convention and the BDEF that references it is not part of the reviewed transport / paste / object set, do not emit a `RAP-*` or `ARCH-*` finding about *"no handler binding"* or *"empty behaviour class"*. The actual handler logic lives in the sibling `*.clas.implementations.abap` — read it and review the local classes there. If the includes cannot be read, record a verification gap instead of a finding.
 
 See `references/reporting-format.md` § *Excluded from review output — cross-file policy* for the cross-file rule.
+
+This exclusion covers the empty-wrapper inference alone. It does not hide a
+missing binding independently established from the actual BDEF/implementation
+or failed required pre-check; apply the canonical contextual policy above.

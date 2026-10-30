@@ -72,7 +72,12 @@ Invoke **`abap-vs-reader`** for each object sequentially. If `abap-vs-reader` ca
 
 ## Phase 2.5 — Pre-check Gate (automated, before manual analysis)
 
-Execute this phase **once per reviewed object** immediately after the input mode is resolved. Results go into a dedicated `## Pre-check` block at the top of each per-object report and into the chat header line suffix (see Phase 7). Details are **omitted by design** — this gate signals *whether* the reviewer must open ATC / ADT, not *what* it found.
+Resolve output mode (Phase 2.6) before running checks. Execute pre-checks once
+per identified object against the same system/source revision as the manual
+review. Pasted/unnamed or historical source without a matching runnable target
+is not executed, not checked against an unrelated active object. Results go in
+the Pre-check block and chat suffix, with concise sanitized failure diagnostics
+and a safe result reference when available.
 
 Read `references/pre-check.md` for the full procedure and config fields. Summary:
 
@@ -84,9 +89,11 @@ Read `references/pre-check.md` for the full procedure and config fields. Summary
 Behaviour rules:
 
 - Pre-check outcomes do **not** contribute to the CRITICAL / WARNING / INFO counters. They are a separate signal.
-- The header icon rule (`🔴` if any CRITICAL survives Phase 5.5, else `🟢`) is unchanged.
+- Use the canonical combined header rule in reporting-format.md: failed checks
+  block green, unavailable/incomplete evidence is yellow.
 - Continue to Phase 3 regardless of pre-check outcome — pre-check does **not** gate manual analysis.
-- If BOTH signals were silently skipped (e.g. a DDIC artefact for which ATC is also unavailable), omit the entire `## Pre-check` block.
+- ATC unavailable is visible, not silently skipped. Omit only checks proven
+  inapplicable; do not hide failed/unavailable checks or coverage gaps.
 
 ---
 
@@ -94,7 +101,7 @@ Behaviour rules:
 
 Skip if `configs/config.md` defines `output_mode: chat | file | both` — use that value and continue to Phase 3.
 
-Otherwise ask exactly once before collecting any evidence:
+Otherwise ask exactly once before pre-check execution or output-file creation:
 
 > **"How should I deliver the review?"**
 > 1. **Chat only** — full report in conversation, no file written.
@@ -239,6 +246,11 @@ Two sub-passes, in this order:
 
 Apply active **static** categories in the order listed in the Phase 1 table (`ARCH`, `PERF`, `CLEAN`, `NAME`, `RAP`, `CDS`, `CCORE`, `TEST`, `TESTSUG`, `DOC`). Read a rule file only when its category is active. Report only rules with an actual violation — omit clean categories entirely. Do not let low-severity style issues outrank behavioural defects.
 
+Catalog patterns and severities are review candidates, not proof of a defect.
+Confirm the actual source/caller guarantees, platform and project contract,
+and observable impact before assigning severity. A legacy statement, join,
+extension point or naming pattern alone is not a behavioral blocker.
+
 ### 5.b — Review lenses (LOGIC / RUNTIME / EFFIC)
 
 Apply the reasoning heuristics in `references/lens-logic.md`, `references/lens-runtime.md`, `references/lens-efficiency.md`. These lenses have **no rule IDs** — the agent must reason about the specific code and name the concrete defect / risk / waste in the finding text.
@@ -248,11 +260,15 @@ Rules for both sub-passes:
 - Report only violations backed by evidence in the source. If you cannot name a plausible input for a LOGIC / RUNTIME finding, downgrade to WARNING or move to `## Architectural suspicions`.
 - Do NOT let low-severity style issues outrank behavioural defects found in Phase 4 or in the lens pass.
 - **Do not print the internal category code (`ARCH`, `RAP`, `LOGIC`, `RUNTIME`, `EFFIC`, …) in the report** — it stays inside the workflow to drive the analysis, per `## Categories — internal only`.
-- Do not duplicate what the pre-check gate already surfaced. If ATC would raise it, describe it as a lens finding only when you have added value beyond the ATC message (e.g. named the specific input, described a runtime consequence).
+- Deduplicate against actual observed pre-check findings, not a guess about
+  what ATC would raise. Preserve a source-confirmed blocker and its cause even
+  when ATC also reports it; reference the observed result instead of duplicating.
 
-### Excluded checks — never emit
+### Contextual exclusions
 
-Even if the underlying rule fires, do **not** report the following patterns. They are false-positive-prone and are handled outside the review loop. Same list is documented in `references/reporting-format.md` § *Excluded from review output* and in the two rule files:
+The following patterns alone do not prove defects. Apply the contextual
+exclusions in reporting-format.md; they never suppress independently proven
+broken behavior or required pre-check failures:
 
 1. **Empty behaviour pool referenced by a BDEF outside the current change set** — `references/rap-review.md`.
 2. **Naming inconsistency among sibling local behaviour-handler classes** — `references/naming-convention.md`.
@@ -287,15 +303,16 @@ Write the complete report to file(s) per the path conventions in `references/rep
 
 ```
 File: <filename>
-Header: <🔴|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO · ATC <✅|❌|⚠️> · tests <✅|❌|⚠️>
+Header: <🔴|🟡|🟢> · <N> CRITICAL · <N> WARNING · <N> INFO · ATC <✅|❌|⚠️> · tests <✅|❌|⚠️|➖>
 ```
 
 Rules for the chat reply:
 
 - **Never** print the words `GO`, `NO-GO`, `CONDITIONAL GO`.
-- Icon rule: 🔴 if any CRITICAL, else 🟢. No 🟡 at the chat level.
+- Use reporting-format.md's combined header rule for both file and chat.
 - Counters are always three, always in order CRITICAL → WARNING → INFO, always shown (use `0` explicitly).
-- **Pre-check suffix**: append `· ATC <icon>` after the counters using the icon set from Phase 2.5. Append `· tests <icon>` **only** when the object type is eligible for unit tests (see `unit_test_eligible_extensions`). Omit the `tests` segment entirely for CDS, BDEF, service definitions/bindings, and DDIC objects. Icons: `✅` clean · `❌` failed · `⚠️` not executed (tool unavailable) · `➖` no tests found (tests only).
+- **Pre-check suffix**: append ATC and eligible tests using reporting-format.md.
+  Failed/timeout/unavailable states remain visible; ineligible tests are omitted.
 - For transport / package reviews, add a final block for the aggregated `_summary.md` in the same shape; ATC / tests icons aggregate to the worst state across objects (`❌ > ⚠️ > ✅`).
 
 If there are verification gaps, unresolved dependencies, or objects that could not be read, append a compact block after the header line(s):
