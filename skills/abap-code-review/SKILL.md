@@ -207,6 +207,10 @@ Check the following, in order:
 - All elements exposed in a projection view exist in the underlying interface view.
 - Metadata extensions refer to elements that still exist after any rename or removal in the interface view or projection.
 
+### Same-named methods across objects
+
+- Compare methods with the same name in different objects of the scope (for example `get_instance_features` in several behavior pools). Report near-identical fragments per `references/best-practices.md` § *Near-duplicate code*.
+
 **Output of Phase 3.5:**
 
 - Confirmed consistency issues → `confirmed finding` (typically CRITICAL or WARNING) under category `ARCH` / `RAP` / `CDS`.

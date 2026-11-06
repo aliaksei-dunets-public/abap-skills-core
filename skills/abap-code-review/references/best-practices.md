@@ -22,6 +22,7 @@ Look for defects such as:
 - Incorrect defaulting that changes business meaning.
 - State updates that leave objects inconsistent.
 - Contract mismatches between caller and callee, CDS and behavior, or interface and implementation.
+- A table parameter processed only by its first row (`itab[ 1 ]`, `READ TABLE … INDEX 1`) while callers may pass several rows. For RAP `keys`, use the RAP single-key rule.
 
 ## Edge Cases And Error Handling
 
@@ -41,6 +42,15 @@ Look for risks such as:
 - Cross-object behavior that encodes conflicting assumptions.
 - Dense methods or mixed responsibilities that obscure intent.
 - Code that works locally but breaks the overall business flow.
+
+### Near-duplicate code (INFO)
+
+Report one **INFO** finding when a near-identical fragment appears in **2 or more** methods or classes of the review scope:
+
+- the same `SELECT` with the same `JOIN`/`WHERE` structure, or
+- about 5 or more consecutive statements that differ only in variable names, entity names, or literals.
+
+List every location in one finding. Fix: extract the fragment into a reusable method of a shared helper class (or a CDS view for SQL) and parameterize the differences. Do not report RAP-generated skeletons or one-line framework calls.
 
 Report a confirmed finding only when the defect is supported by code and context. Otherwise, raise an architectural suspicion only when the signal is strong enough to help the next investigation.
 
